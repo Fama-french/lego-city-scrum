@@ -1,0 +1,429 @@
+/* LEGO City Scrum — deliberately minimal "classroom worksheet" look.
+   Black on white, Comic Sans, simple 1px borders, no gradients, no icons. */
+
+:root {
+  --black: #111;
+  --white: #fff;
+  --gray: #666;
+  --light-gray: #f2f2f2;
+  --border: 2px solid var(--black);
+  --radius: 4px;
+  --font: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  background: var(--white);
+  color: var(--black);
+  line-height: 1.4;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font);
+  font-size: 1rem;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0 0 0.5rem;
+}
+
+a {
+  color: var(--black);
+}
+
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1rem;
+  width: 100%;
+}
+
+/* Top bar */
+.topbar {
+  border-bottom: var(--border);
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.topbar-title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+}
+
+.topbar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.meta-item {
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.meta-item strong {
+  display: block;
+  font-size: 1rem;
+}
+
+.badge {
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 0.15rem 0.5rem;
+  font-size: 0.8rem;
+  display: inline-block;
+}
+
+.badge-facilitator {
+  background: var(--black);
+  color: var(--white);
+}
+
+/* Buttons */
+.btn {
+  font-family: var(--font);
+  border: var(--border);
+  border-radius: var(--radius);
+  background: var(--white);
+  color: var(--black);
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--light-gray);
+}
+
+.btn:focus-visible {
+  outline: 3px solid var(--black);
+  outline-offset: 2px;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--black);
+  color: var(--white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #333;
+}
+
+.btn-danger {
+  background: var(--white);
+  border-color: var(--black);
+  text-decoration: underline;
+}
+
+.btn-small {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+}
+
+.btn-link {
+  border: none;
+  background: none;
+  text-decoration: underline;
+  padding: 0;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+/* Cards */
+.card {
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  background: var(--white);
+}
+
+.card + .card {
+  margin-top: 0.75rem;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hint {
+  color: var(--gray);
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  border: 2px dashed var(--black);
+  border-radius: var(--radius);
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--gray);
+}
+
+/* Forms */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.field label {
+  font-weight: bold;
+}
+
+.field input,
+.field select,
+.field textarea {
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  background: var(--white);
+  color: var(--black);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 3rem;
+}
+
+/* Join / user selector */
+.user-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+
+.user-card {
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  background: var(--white);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font);
+}
+
+.user-card:hover:not(:disabled) {
+  background: var(--light-gray);
+}
+
+.user-card:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.user-card .name {
+  font-size: 1.3rem;
+  font-weight: bold;
+  display: block;
+}
+
+.user-card .role {
+  color: var(--gray);
+}
+
+/* Backlog / kanban */
+.category-tag {
+  display: inline-block;
+  border: 1px solid var(--black);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.4rem;
+}
+
+.story-sentence {
+  margin: 0.4rem 0;
+}
+
+.story-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  color: var(--gray);
+  margin-top: 0.5rem;
+}
+
+.story-meta strong {
+  color: var(--black);
+}
+
+.kanban {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+@media (max-width: 800px) {
+  .kanban {
+    grid-template-columns: 1fr;
+  }
+}
+
+.kanban-column {
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem;
+  background: var(--light-gray);
+  min-height: 120px;
+}
+
+.kanban-column h3 {
+  text-align: center;
+  border-bottom: 1px solid var(--black);
+  padding-bottom: 0.4rem;
+}
+
+.kanban-card {
+  background: var(--white);
+}
+
+/* Ranking board */
+.rank-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rank-item {
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 0.6rem 0.75rem;
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: grab;
+}
+
+.rank-item.dragging {
+  opacity: 0.5;
+}
+
+.rank-number {
+  font-weight: bold;
+  min-width: 1.5rem;
+}
+
+.reorder-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+/* Progress */
+.progress-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.progress-list li {
+  font-size: 0.95rem;
+}
+
+/* Facilitator */
+.facilitator-panel {
+  border: 3px solid var(--black);
+  border-radius: var(--radius);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.facilitator-panel h2 {
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.reset-zone {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px dashed var(--black);
+}
+
+/* Table */
+table.backlog-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+table.backlog-table th,
+table.backlog-table td {
+  border: 1px solid var(--black);
+  padding: 0.5rem;
+  text-align: left;
+}
+
+table.backlog-table th {
+  background: var(--light-gray);
+  cursor: pointer;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+details.city-vision summary {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.error-banner {
+  border: var(--border);
+  background: var(--light-gray);
+  padding: 0.75rem;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.center-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+}
