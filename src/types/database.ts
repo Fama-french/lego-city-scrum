@@ -124,3 +124,10 @@ export interface TeamEstimateRow {
   median_points: number
   submissions: number
 }
+
+export interface PointSubmissionRow {
+  story_id: string
+  participant_id: string
+  participant_name: string
+  points: number
+}

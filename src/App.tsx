@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useParticipant } from './hooks/useParticipant'
 import { useSession } from './hooks/useSession'
 import { useStories } from './hooks/useStories'
@@ -9,6 +9,7 @@ import { assignPriorityPositions } from './lib/aggregation'
 import { canOverridePoints, isFacilitator } from './lib/permissions'
 import { Layout } from './components/Layout'
 import { FacilitatorControls } from './components/FacilitatorControls'
+import { PointsReviewPanel } from './components/PointsReviewPanel'
 import { JoinPage } from './pages/JoinPage'
 import { StoriesPage } from './pages/StoriesPage'
 import { BacklogPage } from './pages/BacklogPage'
@@ -25,6 +26,7 @@ function App() {
   const rankings = useRankings(participant?.id ?? null, session?.priority_revealed ?? false)
   const estimates = useEstimates(participant?.id ?? null, session?.estimates_revealed ?? false)
   const retro = useRetroNotes()
+  const [reviewOpen, setReviewOpen] = useState(false)
 
   const createdAtByStory = useMemo(
     () => Object.fromEntries(stories.stories.map((s) => [s.id, s.created_at])),
@@ -169,7 +171,7 @@ function App() {
   }
 
   return (
-    <Layout participant={participant} session={session} onSwitchUser={switchUser}>
+    <Layout participant={participant} session={session} onSwitchUser={switchUser} onReviewPoints={() => setReviewOpen(true)}>
       {isFacilitator(participant) && (
         <FacilitatorControls
           session={session}
@@ -185,6 +187,15 @@ function App() {
         </p>
       )}
       {renderStage()}
+      {reviewOpen && canOverridePoints(participant) && (
+        <PointsReviewPanel
+          stories={stories.stories}
+          totalParticipants={members.length}
+          onClose={() => setReviewOpen(false)}
+          onFetch={estimates.fetchPointSubmissions}
+          onSetOverride={stories.setPointsOverride}
+        />
+      )}
     </Layout>
   )
 }

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { ClassroomSession, TeamMember } from '../types/database'
-import { isFacilitator } from '../lib/permissions'
+import { canOverridePoints, isFacilitator } from '../lib/permissions'
 import { stageLabel } from '../hooks/useSession'
 import { memberColor } from '../lib/colors'
 
@@ -8,10 +8,11 @@ interface LayoutProps {
   participant: TeamMember
   session: ClassroomSession
   onSwitchUser: () => void
+  onReviewPoints: () => void
   children: ReactNode
 }
 
-export function Layout({ participant, session, onSwitchUser, children }: LayoutProps) {
+export function Layout({ participant, session, onSwitchUser, onReviewPoints, children }: LayoutProps) {
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -30,6 +31,11 @@ export function Layout({ participant, session, onSwitchUser, children }: LayoutP
             <strong>{stageLabel(session.current_stage)}</strong>
           </div>
           {isFacilitator(participant) && <span className="badge badge-facilitator">FACILITATOR</span>}
+          {canOverridePoints(participant) && (
+            <button className="btn btn-small" onClick={onReviewPoints}>
+              Review Points
+            </button>
+          )}
           <button className="btn-link" onClick={onSwitchUser}>
             Switch user
           </button>

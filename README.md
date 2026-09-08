@@ -95,8 +95,8 @@ Browser (each student's laptop)
         ├── PostgreSQL          (team_members, session, stories, rankings, estimates, retro_notes)
         ├── Realtime            (postgres_changes on session/stories/retro_notes/team_members)
         ├── Row Level Security  (who can read/write which rows)
-        └── SQL functions       (add_assignee, remove_assignee, set_points_override, get_team_priority,
-                                 get_team_estimates, reset_classroom)
+        └── SQL functions       (add_assignee, remove_assignee, set_points_override, get_point_submissions,
+                                 get_team_priority, get_team_estimates, reset_classroom)
 ```
 
 No custom backend server — the browser talks to Supabase directly using the public anon key. All
@@ -145,6 +145,12 @@ default — nobody types in "the" priority, and nobody has to guess "the" estima
   layered on top of the calculation, not a replacement for it — the underlying estimates stay untouched and
   the median is still visible, it's just superseded by the override when one is set. Enforced server-side by
   the `set_points_override()` SQL function, which checks the caller is one of those three names.
+- **Review Points**: those same three see a "Review Points" button in the top bar (everyone else doesn't).
+  It opens a panel listing every individual's point submission per story, by name, plus the average — so
+  they can arbitrate before deciding whether to override. This intentionally breaks the usual
+  private-until-everyone-submits rule, but only for this specific trio, and is enforced server-side by
+  `get_point_submissions()`, not just hidden in the UI. It isn't gated on estimates being revealed, so it
+  can be used to check in-progress voting too (e.g. during Sprint Planning).
 
 Both calculations exist in two places that are meant to agree:
 - [`src/lib/aggregation.ts`](src/lib/aggregation.ts) — a small, dependency-free, unit-tested TypeScript

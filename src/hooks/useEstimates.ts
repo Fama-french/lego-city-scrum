@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import type { ProgressRow, StoryPoints, TeamEstimateRow } from '../types/database'
+import type { PointSubmissionRow, ProgressRow, StoryPoints, TeamEstimateRow } from '../types/database'
 
 const PROGRESS_POLL_MS = 4000
 
@@ -11,6 +11,7 @@ interface UseEstimatesResult {
   loading: boolean
   error: string | null
   submitEstimate: (storyId: string, points: StoryPoints, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  fetchPointSubmissions: () => Promise<{ ok: true; data: PointSubmissionRow[] } | { ok: false; error: string }>
 }
 
 export function useEstimates(participantId: string | null, revealed: boolean): UseEstimatesResult {
@@ -87,5 +88,13 @@ export function useEstimates(participantId: string | null, revealed: boolean): U
     [loadMine, loadProgress]
   )
 
-  return { myEstimates, progress, teamEstimates, loading, error, submitEstimate }
+  const fetchPointSubmissions = useCallback(async () => {
+    const { data, error } = await supabase.rpc('get_point_submissions')
+    if (error) {
+      return { ok: false as const, error: error.message }
+    }
+    return { ok: true as const, data: data as PointSubmissionRow[] }
+  }, [])
+
+  return { myEstimates, progress, teamEstimates, loading, error, submitEstimate, fetchPointSubmissions }
 }
