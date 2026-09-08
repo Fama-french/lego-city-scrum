@@ -3,6 +3,7 @@ import type { Category, ProgressRow, Story, StoryPoints, TeamMember } from '../t
 import { StoryForm } from '../components/StoryForm'
 import { Backlog } from '../components/Backlog'
 import { CityVision } from '../components/CityVision'
+import { BuildRequirements } from '../components/BuildRequirements'
 import { RankingBoard } from '../components/RankingBoard'
 import { useOrderState } from '../hooks/useOrderState'
 import { EstimationBoard } from '../components/EstimationBoard'
@@ -83,6 +84,7 @@ export function StoriesPage({
   return (
     <div className="stack">
       <CityVision />
+      <BuildRequirements />
 
       <div className="card">
         <h2>Story Progress</h2>

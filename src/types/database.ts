@@ -77,7 +77,7 @@ export interface Story {
   updated_at: string
 }
 
-export const STORY_POINTS = [1, 2, 3, 5, 8, 13] as const
+export const STORY_POINTS = [1, 2, 3, 5, 8, 13, 21] as const
 export type StoryPoints = (typeof STORY_POINTS)[number]
 
 export interface Ranking {

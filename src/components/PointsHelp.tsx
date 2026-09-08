@@ -1,10 +1,11 @@
 const SCALE: { points: number; comparison: string }[] = [
-  { points: 1, comparison: 'A single small house. Quick to build, no real head-scratching.' },
-  { points: 2, comparison: 'A small shop or bus stop. Still simple, a few more pieces.' },
-  { points: 3, comparison: 'A playground or park. Several pieces working together.' },
+  { points: 1, comparison: 'A house. The baseline unit — about 5-6 bricks, quick to build.' },
+  { points: 2, comparison: 'A small shop or bus stop. Still simple, a few more pieces than a house.' },
+  { points: 3, comparison: 'An apartment compound — roughly 3x the size of a single house, several units together.' },
   { points: 5, comparison: 'A school or clinic. Multiple sections, needs some planning.' },
-  { points: 8, comparison: 'A hospital or town hall. Complex, many parts, needs coordination.' },
-  { points: 13, comparison: 'A whole city block or landmark. Big and uncertain — maybe split it up.' },
+  { points: 8, comparison: 'A town hall or fire station. Complex, many parts, needs coordination.' },
+  { points: 13, comparison: 'A large landmark or transit hub. Big and uncertain — maybe split it up.' },
+  { points: 21, comparison: 'A hospital. The biggest, most complex build in the city.' },
 ]
 
 export function PointsHelp() {
