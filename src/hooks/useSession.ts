@@ -52,9 +52,19 @@ export function useSession(): UseSessionResult {
         .select()
         .maybeSingle()
       if (error) {
-        setError('Could not update the workflow stage. Only Leo can do this.')
+        setError(`Could not update the workflow stage: ${error.message}`)
         return
       }
+      if (!data) {
+        // RLS silently blocked the update (0 rows matched) rather than
+        // raising an error - this means the caller isn't currently bound to
+        // Leo. Keep the existing session state instead of clobbering it.
+        setError(
+          'Could not update the workflow stage - only Leo can do this. If you are Leo but keep seeing this, use "Switch user" and rejoin as Leo.'
+        )
+        return
+      }
+      setError(null)
       setSession(data as ClassroomSession)
     },
     [session]

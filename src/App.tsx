@@ -47,7 +47,12 @@ function App() {
 
   async function handleReset(): Promise<{ ok: true } | { ok: false; error: string }> {
     const { error } = await supabase.rpc('reset_classroom')
-    if (error) return { ok: false, error: 'Could not reset the classroom. Only Leo can do this.' }
+    if (error) {
+      const hint = error.message.includes('Leo')
+        ? ' If you are Leo but keep seeing this, use "Switch user" and rejoin as Leo, then try again.'
+        : ''
+      return { ok: false, error: `${error.message}${hint}` }
+    }
     return { ok: true }
   }
 

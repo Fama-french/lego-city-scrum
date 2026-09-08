@@ -47,14 +47,28 @@ export function FacilitatorControls({ session, priorityProgress, estimateProgres
       case 'estimation': {
         const ready = allValidated(priorityProgress, estimateProgress)
         const nextStage = current_sprint === 0 ? 'backlog' : 'retrospective'
+        const reveal = () => onAdvance({ priority_revealed: true, estimates_revealed: true, current_stage: nextStage })
         return (
-          <button
-            className="btn btn-primary"
-            disabled={!ready}
-            onClick={() => onAdvance({ priority_revealed: true, estimates_revealed: true, current_stage: nextStage })}
-          >
-            Reveal Order & Points {ready ? '' : '(waiting for everyone to validate)'}
-          </button>
+          <div className="stack">
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                if (!ready) {
+                  const notDone = [...priorityProgress, ...estimateProgress]
+                    .filter((p) => !p.complete)
+                    .map((p) => p.name)
+                  const uniqueNotDone = Array.from(new Set(notDone))
+                  const confirmed = window.confirm(
+                    `Not everyone has validated yet (still waiting on: ${uniqueNotDone.join(', ') || 'someone'}). Reveal anyway?`
+                  )
+                  if (!confirmed) return
+                }
+                reveal()
+              }}
+            >
+              Reveal Order & Points {ready ? '' : '(not everyone has validated)'}
+            </button>
+          </div>
         )
       }
       case 'backlog':
