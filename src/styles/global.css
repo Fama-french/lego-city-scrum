@@ -1,5 +1,5 @@
 /* LEGO City Scrum — deliberately minimal "classroom worksheet" look.
-   Black on white, Comic Sans, simple 1px borders, no gradients, no icons. */
+   Black on white, JetBrains Mono, simple 1px borders, no gradients, no icons. */
 
 :root {
   --black: #111;
@@ -8,7 +8,7 @@
   --light-gray: #f2f2f2;
   --border: 2px solid var(--black);
   --radius: 4px;
-  --font: 'Comic Sans MS', 'Comic Sans', cursive, sans-serif;
+  --font: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
 * {

@@ -45,7 +45,7 @@ a 20-minute sprint, not a general-purpose project management product.
   re-open ordering/estimating so newly added stories get a priority and points before the next sprint).
 - **Leo-only classroom reset**, enforced in the database — not just hidden in the UI.
 - **Realtime sync** via Supabase so nobody has to refresh.
-- Black-and-white, Comic Sans, no-frills "classroom worksheet" visual design.
+- Black-and-white, JetBrains Mono, no-frills "classroom worksheet" visual design.
 
 ## Scrum Workflow
 
