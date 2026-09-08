@@ -36,8 +36,9 @@ a 20-minute sprint, not a general-purpose project management product.
 - **Private until validated.** Your order and estimates are yours alone until you click "Validate" — then
   everyone can see *that* you're done (a name + checkmark), never your actual choices. Once every
   participant has validated, Leo can reveal the aggregated team order and point totals.
-- **A minimal 3-column Kanban board** (Backlog / In Progress / Done) with atomic "claim this story" logic
-  so two people can't grab the same card.
+- **A minimal 3-column Kanban board** (Backlog / In Progress / Done). More than one person can be assigned
+  to the same story (pairing on a build). Anyone can assign or unassign themselves; **Leo, Gbenro, and
+  Austin** can additionally assign or remove *anyone* on any story.
 - **Three-sprint workflow** (Planning → Sprint → Demo → Retrospective/Grooming) driven by Leo, the
   facilitator.
 - **Retrospective notes** and mid-exercise backlog grooming (add stories, edit category/status, and
@@ -94,7 +95,7 @@ Browser (each student's laptop)
         ├── PostgreSQL          (team_members, session, stories, rankings, estimates, retro_notes)
         ├── Realtime            (postgres_changes on session/stories/retro_notes/team_members)
         ├── Row Level Security  (who can read/write which rows)
-        └── SQL functions       (claim_story, get_team_priority, get_team_estimates, reset_classroom)
+        └── SQL functions       (add_assignee, remove_assignee, get_team_priority, get_team_estimates, reset_classroom)
 ```
 
 No custom backend server — the browser talks to Supabase directly using the public anon key. All
@@ -114,7 +115,7 @@ All of this is created by [`supabase/migrations/001_initial_schema.sql`](supabas
 | -------------- | --------------------------------------------------------------------------------- |
 | `team_members` | The six fixed participants, plus `auth_user_id` binding a browser to a name.       |
 | `session`      | One row: current workflow stage, current sprint (0–3), and two "revealed" flags.   |
-| `stories`      | User stories: actor/want/benefit + generated sentence, category, assignee, status. |
+| `stories`      | User stories: actor/want/benefit + generated sentence, categories (array), assignees (array), status. |
 | `rankings`     | One row per (story, participant): that participant's private rank for that story.  |
 | `estimates`    | One row per (story, participant): that participant's private point estimate.       |
 | `retro_notes`  | Free-text retrospective notes, tagged by sprint and author.                         |
@@ -159,9 +160,10 @@ This gives real, database-enforced guarantees for the things that matter most:
   `session` and a check inside the `reset_classroom()` function, not just a hidden button.
 - **A participant can only submit their own ranking/estimate** — nobody can vote as someone else, since
   writes are checked against whichever `team_members` row the caller's `auth.uid()` is currently bound to.
-- **Two people can never both claim the same story** — `claim_story()` does an atomic, single-statement
-  `UPDATE ... WHERE assigned_to IS NULL`, which Postgres's row locking makes race-free; whoever's `UPDATE`
-  arrives first wins, the second gets "Someone else just claimed this story."
+- **Assignment respects the admin tier** — `add_assignee()`/`remove_assignee()` check, server-side, that a
+  caller assigning or removing someone *other than themselves* is bound to Leo, Gbenro, or Austin; everyone
+  else can only add/remove themselves. A story can have multiple assignees (pairing on a build) — adding the
+  first one flips an otherwise-backlog story to in_progress, and removing the last one flips it back.
 
 **Identity claiming is soft, by design.** Unlike the guarantees above, claiming a name is *not* an exclusive
 lock — clicking an already-claimed name re-binds it to your browser instead of being blocked, after a
@@ -284,15 +286,19 @@ values as your `.env.local`). No server-side runtime is needed — Supabase is t
 
 ## Roles
 
-Roles are fixed, seeded directly into `team_members`, and never assigned through the UI:
+Roles are fixed, seeded directly into `team_members`, and never assigned through the UI. Everyone — regardless
+of role — writes stories, orders/estimates the backlog, and assigns/unassigns *themselves* on the Kanban
+board. Two extra permission layers sit on top of that baseline:
 
-- **Product Owner** (Gbenro) and **Scrum Master** (Ayush) participate exactly like developers in this tool
-  — the app doesn't gate any feature behind those two roles specifically, matching how the classroom
-  exercise treats everyone as a contributor to the backlog and the board.
-- **Developer** (Austin, Sije, Jessica) — writes stories, ranks, estimates, claims and works stories on the
-  Kanban board.
-- **Developer / Facilitator** (Leo) — does everything a developer does, plus is the only participant who
-  sees the Facilitator panel, can advance the workflow stage, and can reset the classroom.
+- **Facilitator** (Leo only) — the only participant who sees the Facilitator panel, can advance the workflow
+  stage, reveal the team order/points, and reset the classroom.
+- **Kanban admins** (Leo, Gbenro, Austin) — can additionally assign or remove *anyone* on any story, not just
+  themselves (e.g. Gbenro, as Product Owner, moving a story to a specific developer; Austin helping
+  rebalance the board mid-sprint). Ayush, Sije, and Jessica can only manage their own assignment.
+
+This mapping (which three names get admin rights) is hardcoded in `KANBAN_ADMIN_NAMES` in
+[`src/lib/permissions.ts`](src/lib/permissions.ts) and mirrored in the `add_assignee`/`remove_assignee` SQL
+functions — change both together if your class wants a different set of people to have it.
 
 ## How to Reset the Classroom
 
@@ -367,8 +373,10 @@ project), verify the full flow manually before class:
    confirm the app moves to the Final Product Backlog.
 7. Try joining as a name that's already active from another browser/tab; confirm you get a confirmation
    prompt (not a silent takeover), and that the original browser is bumped back to the join screen.
-8. Start Sprint 1 → Sprint Planning; have two participants try to claim the same story at nearly the same
-   time — confirm only one succeeds and the other sees "Someone else just claimed this story."
+8. Start Sprint 1 → Sprint Planning; have two participants assign themselves to the same story and confirm
+   both show up as assignees. Have Jessica (not an admin) try to assign Sije to a story and confirm it's
+   blocked; have Gbenro or Austin do the same and confirm it succeeds. Confirm Jessica can still remove
+   herself, and only an admin can remove Sije.
 9. Move a story to Done; start Demo, then Retrospective.
 10. Add a note and a new story during Retrospective; confirm both appear for everyone, then use "Re-open
     Backlog Building" and confirm the new story can be ordered/estimated without disturbing the others'

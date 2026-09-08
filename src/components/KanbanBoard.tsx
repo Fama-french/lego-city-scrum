@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Story, StoryStatus, TeamMember } from '../types/database'
-import { isFacilitator } from '../lib/permissions'
+import { canChangeStoryStatus, isKanbanAdmin } from '../lib/permissions'
 import { StoryCard } from './StoryCard'
 
 interface KanbanBoardProps {
@@ -8,9 +8,9 @@ interface KanbanBoardProps {
   members: TeamMember[]
   participant: TeamMember
   pointsMap?: Record<string, number>
-  onClaim: (storyId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  onAddAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  onRemoveAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetStatus: (storyId: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
-  onUnassign: (storyId: string) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 const COLUMNS: { status: StoryStatus; title: string }[] = [
@@ -19,40 +19,57 @@ const COLUMNS: { status: StoryStatus; title: string }[] = [
   { status: 'done', title: 'DONE' },
 ]
 
-export function KanbanBoard({ stories, members, participant, pointsMap, onClaim, onSetStatus, onUnassign }: KanbanBoardProps) {
+function nameOf(members: TeamMember[], id: string): string {
+  return members.find((m) => m.id === id)?.name ?? 'Unknown'
+}
+
+function AssignOtherControl({
+  story,
+  members,
+  onAdd,
+}: {
+  story: Story
+  members: TeamMember[]
+  onAdd: (participantId: string) => void
+}) {
+  const available = members.filter((m) => !story.assignees.includes(m.id))
+  const [selected, setSelected] = useState(available[0]?.id ?? '')
+
+  if (available.length === 0) return null
+
+  return (
+    <span style={{ display: 'inline-flex', gap: '0.3rem', alignItems: 'center' }}>
+      <select value={selected} onChange={(e) => setSelected(e.target.value)} aria-label="Assign someone else">
+        {available.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+          </option>
+        ))}
+      </select>
+      <button type="button" className="btn btn-small" onClick={() => selected && onAdd(selected)}>
+        Assign
+      </button>
+    </span>
+  )
+}
+
+export function KanbanBoard({ stories, members, participant, pointsMap, onAddAssignee, onRemoveAssignee, onSetStatus }: KanbanBoardProps) {
   const [error, setError] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
-  const facilitator = isFacilitator(participant)
+  const admin = isKanbanAdmin(participant)
+
+  async function handle(result: { ok: true } | { ok: false; error: string }) {
+    if (!result.ok) setError(result.error)
+    else setError(null)
+  }
 
   async function moveTo(story: Story, target: StoryStatus) {
-    setError(null)
     if (target === story.status) return
-
-    if (facilitator) {
-      const result = await onSetStatus(story.id, target)
-      if (!result.ok) setError(result.error)
+    if (!canChangeStoryStatus(participant, story)) {
+      setError('Only an assignee (or Leo, Gbenro, Austin) can move this story.')
       return
     }
-
-    if (target === 'in_progress' && story.assigned_to === null) {
-      const result = await onClaim(story.id)
-      if (!result.ok) setError(result.error)
-      return
-    }
-
-    if (story.assigned_to !== participant.id) {
-      setError('You can only move your own stories.')
-      return
-    }
-
-    if (target === 'backlog') {
-      const result = await onUnassign(story.id)
-      if (!result.ok) setError(result.error)
-      return
-    }
-
-    const result = await onSetStatus(story.id, target)
-    if (!result.ok) setError(result.error)
+    handle(await onSetStatus(story.id, target))
   }
 
   return (
@@ -80,8 +97,8 @@ export function KanbanBoard({ stories, members, participant, pointsMap, onClaim,
               )}
               <div className="stack">
                 {columnStories.map((story) => {
-                  const mine = story.assigned_to === participant.id
-                  const unassigned = story.assigned_to === null
+                  const isAssignee = story.assignees.includes(participant.id)
+                  const canModifyStatus = canChangeStoryStatus(participant, story)
                   return (
                     <div key={story.id} draggable onDragStart={() => setDragId(story.id)}>
                       <StoryCard
@@ -90,31 +107,50 @@ export function KanbanBoard({ stories, members, participant, pointsMap, onClaim,
                         points={pointsMap?.[story.id] ?? null}
                         actions={
                           <>
-                            {col.status === 'backlog' && unassigned && (
-                              <button className="btn btn-small btn-primary" onClick={() => moveTo(story, 'in_progress')}>
+                            {!isAssignee && (
+                              <button
+                                className="btn btn-small btn-primary"
+                                onClick={() => onAddAssignee(story.id, participant.id).then(handle)}
+                              >
                                 Assign to me
                               </button>
                             )}
-                            {col.status === 'in_progress' && (mine || facilitator) && (
-                              <button className="btn btn-small btn-primary" onClick={() => moveTo(story, 'done')}>
-                                Mark Done
+                            {isAssignee && (
+                              <button className="btn btn-small" onClick={() => onRemoveAssignee(story.id, participant.id).then(handle)}>
+                                Leave
                               </button>
                             )}
-                            {col.status === 'in_progress' && (mine || facilitator) && (
-                              <button className="btn btn-small" onClick={() => moveTo(story, 'backlog')}>
-                                Back to Backlog
+
+                            {canModifyStatus && col.status === 'backlog' && (
+                              <button className="btn btn-small" onClick={() => moveTo(story, 'in_progress')}>
+                                Move to In Progress
                               </button>
                             )}
-                            {col.status === 'done' && (mine || facilitator) && (
+                            {canModifyStatus && col.status === 'in_progress' && (
+                              <>
+                                <button className="btn btn-small btn-primary" onClick={() => moveTo(story, 'done')}>
+                                  Mark Done
+                                </button>
+                                <button className="btn btn-small" onClick={() => moveTo(story, 'backlog')}>
+                                  Back to Backlog
+                                </button>
+                              </>
+                            )}
+                            {canModifyStatus && col.status === 'done' && (
                               <button className="btn btn-small" onClick={() => moveTo(story, 'in_progress')}>
                                 Reopen
                               </button>
                             )}
-                            {facilitator && !unassigned && (
-                              <button className="btn btn-small" onClick={() => onUnassign(story.id)}>
-                                Unassign
-                              </button>
-                            )}
+
+                            {admin &&
+                              story.assignees
+                                .filter((id) => id !== participant.id)
+                                .map((id) => (
+                                  <button key={id} className="btn btn-small" onClick={() => onRemoveAssignee(story.id, id).then(handle)}>
+                                    Remove {nameOf(members, id)}
+                                  </button>
+                                ))}
+                            {admin && <AssignOtherControl story={story} members={members} onAdd={(id) => onAddAssignee(story.id, id).then(handle)} />}
                           </>
                         }
                       />

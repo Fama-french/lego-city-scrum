@@ -17,7 +17,8 @@ interface UseStoriesResult {
   error: string | null
   addStory: (input: NewStoryInput) => Promise<{ ok: true } | { ok: false; error: string }>
   updateStory: (id: string, patch: Partial<Story>) => Promise<{ ok: true } | { ok: false; error: string }>
-  claimStory: (id: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  addAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  removeAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   setStatus: (id: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
@@ -79,10 +80,18 @@ export function useStories(): UseStoriesResult {
     return { ok: true as const }
   }, [])
 
-  const claimStory = useCallback(async (id: string) => {
-    const { error } = await supabase.rpc('claim_story', { p_story_id: id })
+  const addAssignee = useCallback(async (storyId: string, participantId: string) => {
+    const { error } = await supabase.rpc('add_assignee', { p_story_id: storyId, p_participant_id: participantId })
     if (error) {
-      return { ok: false as const, error: error.message.includes('claimed') ? 'Someone else just claimed this story.' : 'Could not claim that story. Please try again.' }
+      return { ok: false as const, error: error.message }
+    }
+    return { ok: true as const }
+  }, [])
+
+  const removeAssignee = useCallback(async (storyId: string, participantId: string) => {
+    const { error } = await supabase.rpc('remove_assignee', { p_story_id: storyId, p_participant_id: participantId })
+    if (error) {
+      return { ok: false as const, error: error.message }
     }
     return { ok: true as const }
   }, [])
@@ -92,5 +101,5 @@ export function useStories(): UseStoriesResult {
     [updateStory]
   )
 
-  return { stories, loading, error, addStory, updateStory, claimStory, setStatus }
+  return { stories, loading, error, addStory, updateStory, addAssignee, removeAssignee, setStatus }
 }

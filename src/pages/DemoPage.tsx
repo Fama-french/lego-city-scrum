@@ -7,12 +7,12 @@ interface DemoPageProps {
   members: TeamMember[]
   participant: TeamMember
   pointsMap: Record<string, number>
-  onClaim: (storyId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  onAddAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  onRemoveAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetStatus: (storyId: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
-  onUnassign: (storyId: string) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
-export function DemoPage({ sprint, stories, members, participant, pointsMap, onClaim, onSetStatus, onUnassign }: DemoPageProps) {
+export function DemoPage({ sprint, stories, members, participant, pointsMap, onAddAssignee, onRemoveAssignee, onSetStatus }: DemoPageProps) {
   return (
     <div className="stack">
       <h1>SPRINT {sprint} DEMO</h1>
@@ -22,9 +22,9 @@ export function DemoPage({ sprint, stories, members, participant, pointsMap, onC
         members={members}
         participant={participant}
         pointsMap={pointsMap}
-        onClaim={onClaim}
+        onAddAssignee={onAddAssignee}
+        onRemoveAssignee={onRemoveAssignee}
         onSetStatus={onSetStatus}
-        onUnassign={onUnassign}
       />
     </div>
   )

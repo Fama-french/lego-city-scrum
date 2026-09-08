@@ -2,23 +2,39 @@ import type { Story, TeamMember } from '../types/database'
 
 // These helpers only control what the UI *offers*. They are not a security
 // boundary — the real enforcement lives in Postgres RLS policies and the
-// SECURITY DEFINER functions in supabase/migrations/001_initial_schema.sql.
-// See the README "Security model" section for the full explanation.
+// SECURITY DEFINER functions in supabase/migrations/*.sql. See the README
+// "Security model" section for the full explanation.
+
+const KANBAN_ADMIN_NAMES = ['Leo', 'Gbenro', 'Austin']
 
 export function isFacilitator(member: TeamMember | null): boolean {
   return member?.name === 'Leo'
 }
 
-export function canClaimStory(member: TeamMember | null, story: Story): boolean {
+/** Leo, Gbenro, and Austin can assign or remove *anyone* on the Kanban board, not just themselves. */
+export function isKanbanAdmin(member: TeamMember | null): boolean {
+  return member !== null && KANBAN_ADMIN_NAMES.includes(member.name)
+}
+
+export function canAssign(member: TeamMember | null, targetId: string): boolean {
   if (!member) return false
-  if (isFacilitator(member)) return true
-  return story.assigned_to === null
+  return isKanbanAdmin(member) || targetId === member.id
+}
+
+export function canRemoveAssignee(member: TeamMember | null, targetId: string): boolean {
+  if (!member) return false
+  return isKanbanAdmin(member) || targetId === member.id
+}
+
+export function canChangeStoryStatus(member: TeamMember | null, story: Story): boolean {
+  if (!member) return false
+  return isKanbanAdmin(member) || story.assignees.includes(member.id)
 }
 
 export function canEditStory(member: TeamMember | null, story: Story): boolean {
   if (!member) return false
   if (isFacilitator(member)) return true
-  return story.created_by === member.id || story.assigned_to === member.id
+  return story.created_by === member.id || story.assignees.includes(member.id)
 }
 
 export function threeStoryProgress(

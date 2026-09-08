@@ -70,7 +70,7 @@ export interface Story {
   full_story: string
   categories: Category[]
   created_by: string
-  assigned_to: string | null
+  assignees: string[]
   status: StoryStatus
   sprint: number | null
   created_at: string

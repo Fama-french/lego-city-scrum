@@ -12,9 +12,8 @@ interface BacklogPageProps {
 
 type SortKey = 'priority' | 'category' | 'points' | 'assignee'
 
-function nameOf(members: TeamMember[], id: string | null): string | null {
-  if (!id) return null
-  return members.find((m) => m.id === id)?.name ?? 'Unknown'
+function assigneeNames(members: TeamMember[], ids: string[]): string[] {
+  return ids.map((id) => members.find((m) => m.id === id)?.name ?? 'Unknown')
 }
 
 export function BacklogPage({ stories, members, priorityMap, pointsMap }: BacklogPageProps) {
@@ -36,7 +35,7 @@ export function BacklogPage({ stories, members, priorityMap, pointsMap }: Backlo
           diff = (pointsMap[a.id] ?? -1) - (pointsMap[b.id] ?? -1)
           break
         case 'assignee':
-          diff = (nameOf(members, a.assigned_to) ?? '').localeCompare(nameOf(members, b.assigned_to) ?? '')
+          diff = assigneeNames(members, a.assignees).join(', ').localeCompare(assigneeNames(members, b.assignees).join(', '))
           break
       }
       return asc ? diff : -diff
@@ -69,12 +68,12 @@ export function BacklogPage({ stories, members, priorityMap, pointsMap }: Backlo
               <th>Story</th>
               <th onClick={() => headerClick('category')}>Category</th>
               <th onClick={() => headerClick('points')}>Points</th>
-              <th onClick={() => headerClick('assignee')}>Assignee</th>
+              <th onClick={() => headerClick('assignee')}>Assignees</th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((story) => {
-              const assignee = nameOf(members, story.assigned_to)
+              const names = assigneeNames(members, story.assignees)
               return (
                 <tr key={story.id}>
                   <td>{priorityMap[story.id] ?? '—'}</td>
@@ -83,7 +82,16 @@ export function BacklogPage({ stories, members, priorityMap, pointsMap }: Backlo
                     <CategoryTagList categories={story.categories} />
                   </td>
                   <td>{pointsMap[story.id] ?? '—'}</td>
-                  <td>{assignee ? <PersonName name={assignee} /> : '—'}</td>
+                  <td>
+                    {names.length > 0
+                      ? names.map((name, i) => (
+                          <span key={name}>
+                            {i > 0 && ', '}
+                            <PersonName name={name} />
+                          </span>
+                        ))
+                      : '—'}
+                  </td>
                 </tr>
               )
             })}

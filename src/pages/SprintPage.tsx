@@ -8,18 +8,18 @@ interface SprintPageProps {
   members: TeamMember[]
   participant: TeamMember
   pointsMap: Record<string, number>
-  onClaim: (storyId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  onAddAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
+  onRemoveAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetStatus: (storyId: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
-  onUnassign: (storyId: string) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
-export function SprintPage({ planning, sprint, stories, members, participant, pointsMap, onClaim, onSetStatus, onUnassign }: SprintPageProps) {
+export function SprintPage({ planning, sprint, stories, members, participant, pointsMap, onAddAssignee, onRemoveAssignee, onSetStatus }: SprintPageProps) {
   return (
     <div className="stack">
       <h1>{planning ? `SPRINT ${sprint} PLANNING` : `SPRINT ${sprint}`}</h1>
       <p className="hint">
         {planning
-          ? 'Each developer chooses a story to work on. Assigning a story moves it to In Progress.'
+          ? 'Each developer chooses a story to work on. A story can have more than one person on it. Assigning yourself moves it to In Progress.'
           : 'Build! Drag cards or use the buttons to keep the board up to date.'}
       </p>
       <KanbanBoard
@@ -27,9 +27,9 @@ export function SprintPage({ planning, sprint, stories, members, participant, po
         members={members}
         participant={participant}
         pointsMap={pointsMap}
-        onClaim={onClaim}
+        onAddAssignee={onAddAssignee}
+        onRemoveAssignee={onRemoveAssignee}
         onSetStatus={onSetStatus}
-        onUnassign={onUnassign}
       />
     </div>
   )

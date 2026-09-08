@@ -26,7 +26,7 @@ const STATUS_LABEL: Record<Story['status'], string> = {
 
 export function StoryCard({ story, members, priority, points, showStatus, showSprint, actions }: StoryCardProps) {
   const creator = nameOf(members, story.created_by)
-  const assignee = nameOf(members, story.assigned_to)
+  const assigneeNames = story.assignees.map((id) => nameOf(members, id)).filter((n): n is string => n !== null)
 
   return (
     <div className="card kanban-card">
@@ -37,7 +37,15 @@ export function StoryCard({ story, members, priority, points, showStatus, showSp
           <strong>Created by:</strong> {creator ? <PersonName name={creator} /> : '—'}
         </span>
         <span>
-          <strong>Assignee:</strong> {assignee ? <PersonName name={assignee} /> : '—'}
+          <strong>Assignees:</strong>{' '}
+          {assigneeNames.length > 0
+            ? assigneeNames.map((name, i) => (
+                <span key={name}>
+                  {i > 0 && ', '}
+                  <PersonName name={name} />
+                </span>
+              ))
+            : '—'}
         </span>
         <span>
           <strong>Priority:</strong> {priority ? `#${priority}` : 'Not ranked'}

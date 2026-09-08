@@ -112,9 +112,9 @@ function App() {
             members={members}
             participant={participant!}
             pointsMap={pointsMap}
-            onClaim={stories.claimStory}
+            onAddAssignee={stories.addAssignee}
+            onRemoveAssignee={stories.removeAssignee}
             onSetStatus={stories.setStatus}
-            onUnassign={(id) => stories.updateStory(id, { assigned_to: null, status: 'backlog' })}
           />
         )
       case 'demo':
@@ -125,9 +125,9 @@ function App() {
             members={members}
             participant={participant!}
             pointsMap={pointsMap}
-            onClaim={stories.claimStory}
+            onAddAssignee={stories.addAssignee}
+            onRemoveAssignee={stories.removeAssignee}
             onSetStatus={stories.setStatus}
-            onUnassign={(id) => stories.updateStory(id, { assigned_to: null, status: 'backlog' })}
           />
         )
       case 'retrospective':
