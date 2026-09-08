@@ -64,13 +64,17 @@ export function assignPriorityPositions(
  * Team estimate = median of submitted story points. Median is used instead of
  * the mean because story points are ordinal, and the median resists outliers
  * (e.g. one person estimating 13 while everyone else says 3).
+ *
+ * This is the "lower median" (matches Postgres's PERCENTILE_DISC(0.5), used
+ * server-side): for an even number of submissions it picks the lower of the
+ * two middle values rather than averaging them. Story points are a fixed
+ * Fibonacci-ish scale, so an averaged result like 4 (between 3 and 5) isn't a
+ * real point value — this guarantees the result is always one of the actual
+ * submitted points, never a half-point. Leo, Gbenro, or Ayush can always
+ * override the result manually if the team disagrees with it.
  */
 export function medianPoints(points: number[]): number | null {
   if (points.length === 0) return null
   const sorted = [...points].sort((a, b) => a - b)
-  const mid = Math.floor(sorted.length / 2)
-  if (sorted.length % 2 === 0) {
-    return (sorted[mid - 1] + sorted[mid]) / 2
-  }
-  return sorted[mid]
+  return sorted[Math.floor((sorted.length - 1) / 2)]
 }

@@ -6,7 +6,7 @@ import { useRankings } from './hooks/useRankings'
 import { useEstimates } from './hooks/useEstimates'
 import { useRetroNotes } from './hooks/useRetroNotes'
 import { assignPriorityPositions } from './lib/aggregation'
-import { isFacilitator } from './lib/permissions'
+import { canOverridePoints, isFacilitator } from './lib/permissions'
 import { Layout } from './components/Layout'
 import { FacilitatorControls } from './components/FacilitatorControls'
 import { JoinPage } from './pages/JoinPage'
@@ -41,9 +41,15 @@ function App() {
   }, [rankings.teamPriority, createdAtByStory])
 
   const pointsMap = useMemo(() => {
-    if (!estimates.teamEstimates) return {}
-    return Object.fromEntries(estimates.teamEstimates.map((r) => [r.story_id, r.median_points]))
-  }, [estimates.teamEstimates])
+    const map: Record<string, number> = {}
+    for (const r of estimates.teamEstimates ?? []) {
+      map[r.story_id] = r.median_points
+    }
+    for (const story of stories.stories) {
+      if (story.points_override != null) map[story.id] = story.points_override
+    }
+    return map
+  }, [estimates.teamEstimates, stories.stories])
 
   async function handleReset(): Promise<{ ok: true } | { ok: false; error: string }> {
     const { error } = await supabase.rpc('reset_classroom')
@@ -101,7 +107,16 @@ function App() {
           />
         )
       case 'backlog':
-        return <BacklogPage stories={stories.stories} members={members} priorityMap={priorityMap} pointsMap={pointsMap} />
+        return (
+          <BacklogPage
+            stories={stories.stories}
+            members={members}
+            priorityMap={priorityMap}
+            pointsMap={pointsMap}
+            canOverridePoints={canOverridePoints(participant!)}
+            onSetPointsOverride={stories.setPointsOverride}
+          />
+        )
       case 'sprint_planning':
       case 'sprint':
         return (
@@ -115,6 +130,7 @@ function App() {
             onAddAssignee={stories.addAssignee}
             onRemoveAssignee={stories.removeAssignee}
             onSetStatus={stories.setStatus}
+            onSetPointsOverride={stories.setPointsOverride}
           />
         )
       case 'demo':
@@ -128,6 +144,7 @@ function App() {
             onAddAssignee={stories.addAssignee}
             onRemoveAssignee={stories.removeAssignee}
             onSetStatus={stories.setStatus}
+            onSetPointsOverride={stories.setPointsOverride}
           />
         )
       case 'retrospective':
@@ -143,6 +160,7 @@ function App() {
             onAddNote={(note) => retro.addNote(session.current_sprint, note, participant!.id)}
             onAddStory={stories.addStory}
             onUpdateStory={stories.updateStory}
+            onSetPointsOverride={stories.setPointsOverride}
           />
         )
       case 'complete':

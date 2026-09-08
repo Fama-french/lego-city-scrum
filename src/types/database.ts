@@ -73,6 +73,7 @@ export interface Story {
   assignees: string[]
   status: StoryStatus
   sprint: number | null
+  points_override: number | null
   created_at: string
   updated_at: string
 }

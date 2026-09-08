@@ -3,6 +3,7 @@ import {
   canAssign,
   canChangeStoryStatus,
   canEditStory,
+  canOverridePoints,
   canRemoveAssignee,
   isFacilitator,
   isKanbanAdmin,
@@ -12,6 +13,7 @@ import type { Story, TeamMember } from '../types/database'
 
 const leo: TeamMember = { id: 'leo-id', name: 'Leo', role: 'Developer / Facilitator', auth_user_id: 'auth-leo', created_at: '' }
 const gbenro: TeamMember = { id: 'gbenro-id', name: 'Gbenro', role: 'Product Owner', auth_user_id: 'auth-gbenro', created_at: '' }
+const ayush: TeamMember = { id: 'ayush-id', name: 'Ayush', role: 'Scrum Master', auth_user_id: 'auth-ayush', created_at: '' }
 const austin: TeamMember = { id: 'austin-id', name: 'Austin', role: 'Developer', auth_user_id: 'auth-austin', created_at: '' }
 const jessica: TeamMember = { id: 'jessica-id', name: 'Jessica', role: 'Developer', auth_user_id: 'auth-jessica', created_at: '' }
 const sije: TeamMember = { id: 'sije-id', name: 'Sije', role: 'Developer', auth_user_id: 'auth-sije', created_at: '' }
@@ -28,6 +30,7 @@ function makeStory(overrides: Partial<Story>): Story {
     assignees: [],
     status: 'backlog',
     sprint: null,
+    points_override: null,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     ...overrides,
@@ -96,6 +99,21 @@ describe('canChangeStoryStatus', () => {
 
   it('lets an admin change status regardless of assignment', () => {
     expect(canChangeStoryStatus(austin, makeStory({ assignees: [jessica.id] }))).toBe(true)
+  })
+})
+
+describe('canOverridePoints', () => {
+  it('is true for Ayush, Gbenro, and Leo', () => {
+    expect(canOverridePoints(ayush)).toBe(true)
+    expect(canOverridePoints(gbenro)).toBe(true)
+    expect(canOverridePoints(leo)).toBe(true)
+  })
+
+  it('is false for everyone else', () => {
+    expect(canOverridePoints(austin)).toBe(false)
+    expect(canOverridePoints(jessica)).toBe(false)
+    expect(canOverridePoints(sije)).toBe(false)
+    expect(canOverridePoints(null)).toBe(false)
   })
 })
 

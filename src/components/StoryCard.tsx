@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { Story, TeamMember } from '../types/database'
 import { CategoryTagList } from './CategoryTag'
 import { PersonName } from './PersonName'
+import { PointsOverrideControl } from './PointsOverrideControl'
 
 interface StoryCardProps {
   story: Story
@@ -11,6 +12,8 @@ interface StoryCardProps {
   showStatus?: boolean
   showSprint?: boolean
   actions?: ReactNode
+  canOverridePoints?: boolean
+  onSetPointsOverride?: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 function nameOf(members: TeamMember[], id: string | null): string | null {
@@ -24,7 +27,17 @@ const STATUS_LABEL: Record<Story['status'], string> = {
   done: 'Done',
 }
 
-export function StoryCard({ story, members, priority, points, showStatus, showSprint, actions }: StoryCardProps) {
+export function StoryCard({
+  story,
+  members,
+  priority,
+  points,
+  showStatus,
+  showSprint,
+  actions,
+  canOverridePoints,
+  onSetPointsOverride,
+}: StoryCardProps) {
   const creator = nameOf(members, story.created_by)
   const assigneeNames = story.assignees.map((id) => nameOf(members, id)).filter((n): n is string => n !== null)
 
@@ -52,6 +65,13 @@ export function StoryCard({ story, members, priority, points, showStatus, showSp
         </span>
         <span>
           <strong>Estimate:</strong> {points != null ? `${points} pts` : 'Not estimated'}
+          {story.points_override != null && ' (overridden)'}
+          {canOverridePoints && onSetPointsOverride && (
+            <>
+              {' '}
+              <PointsOverrideControl story={story} onSetOverride={onSetPointsOverride} />
+            </>
+          )}
         </span>
         {showStatus && (
           <span>

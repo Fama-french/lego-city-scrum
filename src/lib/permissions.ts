@@ -6,6 +6,7 @@ import type { Story, TeamMember } from '../types/database'
 // "Security model" section for the full explanation.
 
 const KANBAN_ADMIN_NAMES = ['Leo', 'Gbenro', 'Austin']
+const POINTS_OVERRIDE_NAMES = ['Ayush', 'Gbenro', 'Leo']
 
 export function isFacilitator(member: TeamMember | null): boolean {
   return member?.name === 'Leo'
@@ -29,6 +30,11 @@ export function canRemoveAssignee(member: TeamMember | null, targetId: string): 
 export function canChangeStoryStatus(member: TeamMember | null, story: Story): boolean {
   if (!member) return false
   return isKanbanAdmin(member) || story.assignees.includes(member.id)
+}
+
+/** Ayush (Scrum Master), Gbenro (Product Owner), and Leo can override a story's final point value. */
+export function canOverridePoints(member: TeamMember | null): boolean {
+  return member !== null && POINTS_OVERRIDE_NAMES.includes(member.name)
 }
 
 export function canEditStory(member: TeamMember | null, story: Story): boolean {

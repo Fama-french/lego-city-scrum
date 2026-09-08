@@ -12,6 +12,7 @@ interface RetrospectivePageProps {
   onAddNote: (note: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onAddStory: (input: { actor: string; want: string; benefit: string; categories: Category[]; createdBy: string }) => Promise<{ ok: true } | { ok: false; error: string }>
   onUpdateStory: (id: string, patch: Partial<Story>) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 export function RetrospectivePage({
@@ -25,6 +26,7 @@ export function RetrospectivePage({
   onAddNote,
   onAddStory,
   onUpdateStory,
+  onSetPointsOverride,
 }: RetrospectivePageProps) {
   return (
     <div className="stack">
@@ -40,6 +42,7 @@ export function RetrospectivePage({
         pointsMap={pointsMap}
         onAddStory={(input) => onAddStory({ ...input, createdBy: participant.id })}
         onUpdateStory={onUpdateStory}
+        onSetPointsOverride={onSetPointsOverride}
       />
     </div>
   )

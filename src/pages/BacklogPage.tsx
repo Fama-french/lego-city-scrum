@@ -2,12 +2,15 @@ import { useMemo, useState } from 'react'
 import type { Story, TeamMember } from '../types/database'
 import { CategoryTagList } from '../components/CategoryTag'
 import { PersonName } from '../components/PersonName'
+import { PointsOverrideControl } from '../components/PointsOverrideControl'
 
 interface BacklogPageProps {
   stories: Story[]
   members: TeamMember[]
   priorityMap: Record<string, number>
   pointsMap: Record<string, number>
+  canOverridePoints?: boolean
+  onSetPointsOverride?: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 type SortKey = 'priority' | 'category' | 'points' | 'assignee'
@@ -16,7 +19,7 @@ function assigneeNames(members: TeamMember[], ids: string[]): string[] {
   return ids.map((id) => members.find((m) => m.id === id)?.name ?? 'Unknown')
 }
 
-export function BacklogPage({ stories, members, priorityMap, pointsMap }: BacklogPageProps) {
+export function BacklogPage({ stories, members, priorityMap, pointsMap, canOverridePoints, onSetPointsOverride }: BacklogPageProps) {
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [asc, setAsc] = useState(true)
 
@@ -81,7 +84,15 @@ export function BacklogPage({ stories, members, priorityMap, pointsMap }: Backlo
                   <td>
                     <CategoryTagList categories={story.categories} />
                   </td>
-                  <td>{pointsMap[story.id] ?? '—'}</td>
+                  <td>
+                    {pointsMap[story.id] ?? '—'}
+                    {story.points_override != null && ' (overridden)'}
+                    {canOverridePoints && onSetPointsOverride && (
+                      <div style={{ marginTop: '0.3rem' }}>
+                        <PointsOverrideControl story={story} onSetOverride={onSetPointsOverride} />
+                      </div>
+                    )}
+                  </td>
                   <td>
                     {names.length > 0
                       ? names.map((name, i) => (

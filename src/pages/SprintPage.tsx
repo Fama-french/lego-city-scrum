@@ -11,9 +11,21 @@ interface SprintPageProps {
   onAddAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onRemoveAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetStatus: (storyId: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
-export function SprintPage({ planning, sprint, stories, members, participant, pointsMap, onAddAssignee, onRemoveAssignee, onSetStatus }: SprintPageProps) {
+export function SprintPage({
+  planning,
+  sprint,
+  stories,
+  members,
+  participant,
+  pointsMap,
+  onAddAssignee,
+  onRemoveAssignee,
+  onSetStatus,
+  onSetPointsOverride,
+}: SprintPageProps) {
   return (
     <div className="stack">
       <h1>{planning ? `SPRINT ${sprint} PLANNING` : `SPRINT ${sprint}`}</h1>
@@ -30,6 +42,7 @@ export function SprintPage({ planning, sprint, stories, members, participant, po
         onAddAssignee={onAddAssignee}
         onRemoveAssignee={onRemoveAssignee}
         onSetStatus={onSetStatus}
+        onSetPointsOverride={onSetPointsOverride}
       />
     </div>
   )

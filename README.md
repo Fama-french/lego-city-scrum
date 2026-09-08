@@ -95,7 +95,8 @@ Browser (each student's laptop)
         ├── PostgreSQL          (team_members, session, stories, rankings, estimates, retro_notes)
         ├── Realtime            (postgres_changes on session/stories/retro_notes/team_members)
         ├── Row Level Security  (who can read/write which rows)
-        └── SQL functions       (add_assignee, remove_assignee, get_team_priority, get_team_estimates, reset_classroom)
+        └── SQL functions       (add_assignee, remove_assignee, set_points_override, get_team_priority,
+                                 get_team_estimates, reset_classroom)
 ```
 
 No custom backend server — the browser talks to Supabase directly using the public anon key. All
@@ -123,16 +124,27 @@ All of this is created by [`supabase/migrations/001_initial_schema.sql`](supabas
 Two views (`v_ranking_progress`, `v_estimate_progress`) expose *only* whether each person has submitted —
 never their actual values — so the UI can show "4 / 6 submitted" without leaking anyone's vote.
 
-### Aggregation (calculated, never hand-entered)
+### Aggregation (calculated by default, overridable by a few roles)
 
-Per the exercise design, team priority and team estimate are **always calculated from individual
-submissions** — nobody types in "the" priority or "the" estimate.
+Per the exercise design, team priority and team estimate are **calculated from individual submissions** by
+default — nobody types in "the" priority, and nobody has to guess "the" estimate.
 
 - **Priority** = average of each story's rank across everyone who ranked it. Lower average = higher
   priority. Ties break on story creation time (earlier story wins), so ordering is always deterministic.
   Example: ranks `1, 2, 1, 3, 1, 2` → average `1.67`.
 - **Estimate** = **median** of submitted story points, e.g. `3, 5, 5, 8, 5` → `5`. Median is used instead of
   a mean because story points are ordinal, and the median resists one outlier estimate skewing the result.
+  Specifically, this is the **lower median**: for an even number of submissions, it picks the lower of the
+  two middle values rather than averaging them (Postgres's `PERCENTILE_DISC(0.5)`, mirrored by
+  `medianPoints()` in `aggregation.ts`). A plain average could land between two Fibonacci values — e.g. `3`
+  and `5` averaging to `4` — which isn't a real point on the scale; the lower median guarantees the result is
+  always one of the actual submitted values.
+- **Override**: if the calculated median still doesn't reflect what the team agrees on, **Ayush (Scrum
+  Master), Gbenro (Product Owner), or Leo** can set a story's final point value directly (any positive whole
+  number) via the "Override points" control shown next to the estimate wherever it's displayed. This is
+  layered on top of the calculation, not a replacement for it — the underlying estimates stay untouched and
+  the median is still visible, it's just superseded by the override when one is set. Enforced server-side by
+  the `set_points_override()` SQL function, which checks the caller is one of those three names.
 
 Both calculations exist in two places that are meant to agree:
 - [`src/lib/aggregation.ts`](src/lib/aggregation.ts) — a small, dependency-free, unit-tested TypeScript
@@ -164,6 +176,8 @@ This gives real, database-enforced guarantees for the things that matter most:
   caller assigning or removing someone *other than themselves* is bound to Leo, Gbenro, or Austin; everyone
   else can only add/remove themselves. A story can have multiple assignees (pairing on a build) — adding the
   first one flips an otherwise-backlog story to in_progress, and removing the last one flips it back.
+- **Only Ayush, Gbenro, or Leo can override a story's points** — `set_points_override()` checks the caller's
+  bound name server-side before touching the row.
 
 **Identity claiming is soft, by design.** Unlike the guarantees above, claiming a name is *not* an exclusive
 lock — clicking an already-claimed name re-binds it to your browser instead of being blocked, after a

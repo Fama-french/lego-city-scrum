@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { Story, StoryStatus, TeamMember } from '../types/database'
-import { canChangeStoryStatus, isKanbanAdmin } from '../lib/permissions'
+import { canChangeStoryStatus, canOverridePoints, isKanbanAdmin } from '../lib/permissions'
 import { StoryCard } from './StoryCard'
 
 interface KanbanBoardProps {
@@ -11,6 +11,7 @@ interface KanbanBoardProps {
   onAddAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onRemoveAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetStatus: (storyId: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 const COLUMNS: { status: StoryStatus; title: string }[] = [
@@ -53,10 +54,20 @@ function AssignOtherControl({
   )
 }
 
-export function KanbanBoard({ stories, members, participant, pointsMap, onAddAssignee, onRemoveAssignee, onSetStatus }: KanbanBoardProps) {
+export function KanbanBoard({
+  stories,
+  members,
+  participant,
+  pointsMap,
+  onAddAssignee,
+  onRemoveAssignee,
+  onSetStatus,
+  onSetPointsOverride,
+}: KanbanBoardProps) {
   const [error, setError] = useState<string | null>(null)
   const [dragId, setDragId] = useState<string | null>(null)
   const admin = isKanbanAdmin(participant)
+  const overrideAllowed = canOverridePoints(participant)
 
   async function handle(result: { ok: true } | { ok: false; error: string }) {
     if (!result.ok) setError(result.error)
@@ -105,6 +116,8 @@ export function KanbanBoard({ stories, members, participant, pointsMap, onAddAss
                         story={story}
                         members={members}
                         points={pointsMap?.[story.id] ?? null}
+                        canOverridePoints={overrideAllowed}
+                        onSetPointsOverride={onSetPointsOverride}
                         actions={
                           <>
                             {!isAssignee && (

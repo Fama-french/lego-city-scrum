@@ -20,6 +20,7 @@ interface UseStoriesResult {
   addAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   removeAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   setStatus: (id: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
+  setPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 export function useStories(): UseStoriesResult {
@@ -101,5 +102,13 @@ export function useStories(): UseStoriesResult {
     [updateStory]
   )
 
-  return { stories, loading, error, addStory, updateStory, addAssignee, removeAssignee, setStatus }
+  const setPointsOverride = useCallback(async (storyId: string, points: number | null) => {
+    const { error } = await supabase.rpc('set_points_override', { p_story_id: storyId, p_points: points })
+    if (error) {
+      return { ok: false as const, error: error.message }
+    }
+    return { ok: true as const }
+  }, [])
+
+  return { stories, loading, error, addStory, updateStory, addAssignee, removeAssignee, setStatus, setPointsOverride }
 }

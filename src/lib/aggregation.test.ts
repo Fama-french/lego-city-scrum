@@ -86,8 +86,13 @@ describe('medianPoints', () => {
     expect(medianPoints([1, 1, 3, 5, 13])).toBe(3)
   })
 
-  it('averages the two middle values for an even-length list', () => {
-    expect(medianPoints([1, 2, 3, 5])).toBe(2.5)
+  it('picks the lower of the two middle values for an even-length list, never a half-point', () => {
+    expect(medianPoints([1, 2, 3, 5])).toBe(2)
+  })
+
+  it('picks the lower middle even when both middle values are Fibonacci points', () => {
+    // 3 and 5 average to 4, which isn't a valid point value - must return 3.
+    expect(medianPoints([1, 3, 5, 8])).toBe(3)
   })
 
   it('returns the single value for a one-element list', () => {

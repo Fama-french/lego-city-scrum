@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { RetroNote, Story, TeamMember } from '../types/database'
 import type { Category } from '../types/database'
-import { canEditStory } from '../lib/permissions'
+import { canEditStory, canOverridePoints } from '../lib/permissions'
 import { StoryCard } from './StoryCard'
 import { StoryForm } from './StoryForm'
 import { CategoryPicker } from './CategoryPicker'
@@ -18,6 +18,7 @@ interface RetrospectiveProps {
   pointsMap: Record<string, number>
   onAddStory: (input: { actor: string; want: string; benefit: string; categories: Category[] }) => Promise<{ ok: true } | { ok: false; error: string }>
   onUpdateStory: (id: string, patch: Partial<Story>) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 function nameOf(members: TeamMember[], id: string): string {
@@ -35,6 +36,7 @@ export function Retrospective({
   pointsMap,
   onAddStory,
   onUpdateStory,
+  onSetPointsOverride,
 }: RetrospectiveProps) {
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -98,6 +100,8 @@ export function Retrospective({
               priority={priorityMap[story.id] ?? null}
               points={pointsMap[story.id] ?? null}
               showStatus
+              canOverridePoints={canOverridePoints(participant)}
+              onSetPointsOverride={onSetPointsOverride}
               actions={
                 editable ? (
                   <div className="stack" style={{ width: '100%' }}>
