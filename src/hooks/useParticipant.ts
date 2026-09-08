@@ -83,21 +83,21 @@ export function useParticipant(): UseParticipantResult {
 
       const target = members.find((m) => m.id === memberId)
       if (target?.auth_user_id === userId) return { ok: true }
-      if (target?.auth_user_id) {
-        return { ok: false, error: `${target.name} is already in use on another device.` }
-      }
 
+      // Claiming is a soft handoff, not an exclusive lock: this always
+      // succeeds, even if someone else is currently using the name. The UI
+      // shows an "(in use)" hint and asks for confirmation before calling
+      // this, so an accidental takeover requires an explicit choice.
       const { data, error } = await supabase
         .from('team_members')
         .update({ auth_user_id: userId })
         .eq('id', memberId)
-        .is('auth_user_id', null)
         .select()
         .maybeSingle()
 
       if (error || !data) {
         await loadMembers()
-        return { ok: false, error: 'That name was just claimed by someone else. Pick another.' }
+        return { ok: false, error: 'Could not join right now. Please try again.' }
       }
 
       await loadMembers()

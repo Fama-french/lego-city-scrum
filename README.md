@@ -24,42 +24,48 @@ a 20-minute sprint, not a general-purpose project management product.
 ## Features
 
 - **Join by name.** Six predefined participants (Gbenro, Ayush, Austin, Sije, Leo, Jessica), no passwords.
-- **User story creation** with the "As a / I want / so that" template and an auto-generated sentence.
+  Picking an already-active name is allowed (with a confirmation prompt) rather than hard-blocked — see
+  "Identity claiming is soft" below.
+- **User story creation** with the "As a / I want / so that" template and an auto-generated sentence. The
+  list of stories written so far is shown right alongside the form, so people don't duplicate each other.
 - **Shared, realtime product backlog.**
-- **Private, independent prioritization** — everyone drags their own ranking; nobody sees anyone else's
-  until Leo reveals the team's aggregate priority.
-- **Private, independent estimation** using Fibonacci-ish story points (1/2/3/5/8/13), aggregated as a
-  median once Leo reveals it.
+- **Self-paced ordering and estimating.** As soon as you've written at least one story, you can start
+  dragging the backlog into your own priority order and picking story points — no need to wait for Leo or
+  for everyone else to finish writing. A short help panel explains the point scale with LEGO comparisons
+  (a house is 1 point, a school is 5, a hospital is 8, ...).
+- **Private until validated.** Your order and estimates are yours alone until you click "Validate" — then
+  everyone can see *that* you're done (a name + checkmark), never your actual choices. Once every
+  participant has validated, Leo can reveal the aggregated team order and point totals.
 - **A minimal 3-column Kanban board** (Backlog / In Progress / Done) with atomic "claim this story" logic
   so two people can't grab the same card.
-- **Three-sprint workflow** (Planning → Sprint → Demo → Retrospective/Grooming) driven entirely by Leo, the
+- **Three-sprint workflow** (Planning → Sprint → Demo → Retrospective/Grooming) driven by Leo, the
   facilitator.
 - **Retrospective notes** and mid-exercise backlog grooming (add stories, edit category/status, and
-  optionally re-run a quick prioritization/estimation pass for stories added later).
+  re-open ordering/estimating so newly added stories get a priority and points before the next sprint).
 - **Leo-only classroom reset**, enforced in the database — not just hidden in the UI.
 - **Realtime sync** via Supabase so nobody has to refresh.
 - Black-and-white, Comic Sans, no-frills "classroom worksheet" visual design.
 
 ## Scrum Workflow
 
-The app is one shared state machine, controlled entirely by Leo (the Developer/Facilitator). Everyone's
-screen changes automatically as Leo advances the stage:
+The app is one shared state machine. Writing stories, ordering the backlog, and estimating points all happen
+in one open, self-paced phase — nobody needs to wait for Leo to "start" it. Leo's role kicks in once
+everyone has validated their order and estimates, and again at the end of each sprint:
 
 ```
-Join
- └─ Write User Stories        (each person contributes ~3 stories)
-     └─ Prioritization        (private ranking, then Leo reveals the team's average-rank order)
-         └─ Estimation        (private story points, then Leo reveals the team's median)
-             └─ Final Product Backlog   (sorted, sortable, this is the team's source of truth)
-                 └─ Sprint 1: Planning → Sprint → Demo → Retrospective/Grooming
-                     └─ Sprint 2: Planning → Sprint → Demo → Retrospective/Grooming
-                         └─ Sprint 3: Planning → Sprint → Demo → Retrospective/Grooming
-                             └─ Complete (final backlog / final city)
+Join (pick your name)
+ └─ Write, Order & Estimate   (open immediately; self-paced; validate when ready)
+     │                        (Leo reveals the aggregated order + points once everyone has validated)
+     └─ Final Product Backlog   (sorted, sortable, this is the team's source of truth)
+         └─ Sprint 1: Planning → Sprint → Demo → Retrospective/Grooming
+             └─ Sprint 2: Planning → Sprint → Demo → Retrospective/Grooming
+                 └─ Sprint 3: Planning → Sprint → Demo → Retrospective/Grooming
+                     └─ Complete (final backlog / final city)
 ```
 
-From any Retrospective screen, Leo can optionally "Re-run Prioritization" or "Re-run Estimation" — useful if
-new stories were added during grooming and need a priority/estimate before the next sprint. This briefly
-revisits those two stages and returns to the Retrospective when done.
+From any Retrospective screen, Leo can click "Re-open Backlog Building" — useful if new stories were added
+during grooming and need a priority/estimate before the next sprint. This briefly reopens the
+write/order/estimate phase and returns to the Retrospective once revealed again.
 
 ## Team
 
@@ -143,8 +149,7 @@ server-side identity anyway (not just hiding buttons in the UI), the app uses **
 1. On first load, the browser silently calls `supabase.auth.signInAnonymously()`, producing a stable,
    persistent `auth.uid()` for that browser (persisted in local storage by supabase-js, so refreshing or
    closing the tab doesn't lose it).
-2. Picking a name runs a guarded database update that binds that `auth.uid()` to one `team_members` row —
-   but only if the name isn't already claimed by someone else.
+2. Picking a name runs a database update that binds that `auth.uid()` to one `team_members` row.
 3. From then on, Postgres Row Level Security policies can check "is the caller really who they claim to
    be?" via `auth_user_id = auth.uid()`, not just trust a value the client sends.
 
@@ -152,11 +157,19 @@ This gives real, database-enforced guarantees for the things that matter most:
 
 - **Only Leo can advance the workflow stage or reset the classroom** — enforced by an RLS policy on
   `session` and a check inside the `reset_classroom()` function, not just a hidden button.
-- **A participant can only submit their own ranking/estimate** — nobody can vote as someone else.
-- **A name can only be claimed by one browser at a time.**
+- **A participant can only submit their own ranking/estimate** — nobody can vote as someone else, since
+  writes are checked against whichever `team_members` row the caller's `auth.uid()` is currently bound to.
 - **Two people can never both claim the same story** — `claim_story()` does an atomic, single-statement
   `UPDATE ... WHERE assigned_to IS NULL`, which Postgres's row locking makes race-free; whoever's `UPDATE`
   arrives first wins, the second gets "Someone else just claimed this story."
+
+**Identity claiming is soft, by design.** Unlike the guarantees above, claiming a name is *not* an exclusive
+lock — clicking an already-claimed name re-binds it to your browser instead of being blocked, after a
+confirmation prompt ("X is currently in use on another device — join here anyway?"). Whoever claimed a name
+most recently is that person for write purposes; the previous browser will find itself back at the join
+screen next time it syncs. This trades a small amount of collision-safety for the classroom reality that
+someone's laptop dies, or they open a second tab on their phone, and none of that should require Leo to
+reset the whole room. The "(in use)" label is a courtesy heads-up, not a security boundary.
 
 **Accepted tradeoff:** stories themselves (their text, category, status) are updatable by any signed-in
 participant, not locked down field-by-field. This is a small, trusted team collaboratively editing one
@@ -245,11 +258,12 @@ must never reach the browser.
 ## Supabase Setup
 
 1. **Create a project** at [supabase.com](https://supabase.com) (the free tier is plenty for a classroom).
-2. **Run the migration.** Open the SQL Editor in your Supabase dashboard, paste the full contents of
-   [`supabase/migrations/001_initial_schema.sql`](supabase/migrations/001_initial_schema.sql), and run it.
-   This creates every table, seeds the six team members and the initial session row, sets up Row Level
-   Security, and adds the realtime publication entries. It's written to be safe to re-run.
-   - If you use the Supabase CLI instead: `supabase link` then `supabase db push`.
+2. **Run the migrations.** Open the SQL Editor in your Supabase dashboard and run, in order, every file in
+   [`supabase/migrations/`](supabase/migrations/) (currently `001_initial_schema.sql` then
+   `002_relax_identity_claiming.sql`). Together they create every table, seed the six team members and the
+   initial session row, and set up Row Level Security, the realtime publication, and the SQL functions.
+   They're written to be safe to re-run.
+   - If you use the Supabase CLI instead: `supabase link` then `supabase db push` applies all of them.
 3. **Enable Anonymous Sign-ins.** Go to **Authentication → Sign In / Providers → Anonymous Sign-Ins** and
    turn it on. This is required — the app cannot bind a browser to a name without it (see Security Model
    above). This is the one manual dashboard toggle the SQL migration can't set for you.
@@ -323,14 +337,15 @@ before doing anything — see Security Model.
 
 ```
 src/
-  components/     Small, reusable, typed UI pieces (StoryForm, KanbanBoard, RankingBoard, ...)
-  pages/          One component per workflow stage (JoinPage, PrioritizationPage, SprintPage, ...)
-  hooks/          Data + realtime wiring to Supabase (useSession, useStories, useRankings, ...)
+  components/     Small, reusable, typed UI pieces (StoryForm, KanbanBoard, RankingBoard, PointsHelp, ...)
+  pages/          One component per workflow stage (JoinPage, StoriesPage, SprintPage, ...) — StoriesPage
+                  covers the merged write/order/estimate/validate phase
+  hooks/          Data + realtime wiring to Supabase (useSession, useStories, useRankings, useOrderState, ...)
   lib/            Pure logic: aggregation.ts, storyText.ts, permissions.ts, supabase.ts client
   types/          TypeScript types mirroring the database schema
   styles/         global.css (the entire visual design)
 supabase/
-  migrations/001_initial_schema.sql   Full schema, seed data, RLS, and SQL functions
+  migrations/     001_initial_schema.sql (full schema, seed data, RLS, SQL functions), plus later migrations
 ```
 
 ## Manual Test Checklist
@@ -338,17 +353,27 @@ supabase/
 Since this app has no automated end-to-end test suite (matching the "don't overbuild" spirit of the
 project), verify the full flow manually before class:
 
-1. Join as Austin, add three stories.
-2. Switch user, join as Jessica, add three stories, confirm Austin's stories are visible.
-3. As Leo, start Prioritization. Confirm each participant's ranking is private until submitted.
-4. Submit all six rankings, confirm "Reveal Team Priority" only enables once all six are in.
-5. Reveal priority as Leo; confirm the order and averages look right.
-6. Repeat for Estimation; confirm the median shown matches the submitted points.
-7. Start Sprint 1 → Sprint Planning; have two participants try to claim the same story at nearly the same
+1. Join as Austin, add three stories. Confirm ordering/estimating stay locked until the first story is
+   added, then unlock.
+2. Switch user, join as Jessica, add three stories, confirm Austin's stories are visible above the form.
+3. As Jessica, drag stories into an order and pick a point value for each; confirm Austin can't see
+   Jessica's choices (query the `rankings`/`estimates` tables directly, or just note the UI never shows them).
+4. Click "Validate" as Jessica with an estimate missing; confirm it's rejected with a clear message, then
+   fill in the last estimate and validate successfully — confirm Jessica now shows a checkmark in the
+   shared progress list visible to everyone.
+5. Have all six participants write at least one story and validate; confirm Leo's "Reveal Order & Points"
+   button only enables once all six show complete.
+6. Reveal as Leo; confirm the aggregated order (lower average rank first) and median points look right, then
+   confirm the app moves to the Final Product Backlog.
+7. Try joining as a name that's already active from another browser/tab; confirm you get a confirmation
+   prompt (not a silent takeover), and that the original browser is bumped back to the join screen.
+8. Start Sprint 1 → Sprint Planning; have two participants try to claim the same story at nearly the same
    time — confirm only one succeeds and the other sees "Someone else just claimed this story."
-8. Move a story to Done; start Demo, then Retrospective.
-9. Add a note and a new story during Retrospective; confirm both appear for everyone.
-10. Start Sprint 2, then Sprint 3, then Finish Exercise.
-11. As Leo, reset the classroom; confirm everything clears and all six names become available again.
-12. Confirm a non-Leo participant never sees the Facilitator panel or reset button, and that calling the
+9. Move a story to Done; start Demo, then Retrospective.
+10. Add a note and a new story during Retrospective; confirm both appear for everyone, then use "Re-open
+    Backlog Building" and confirm the new story can be ordered/estimated without disturbing the others'
+    already-validated status until they include it too.
+11. Start Sprint 2, then Sprint 3, then Finish Exercise.
+12. As Leo, reset the classroom; confirm everything clears and all six names become available again.
+13. Confirm a non-Leo participant never sees the Facilitator panel or reset button, and that calling the
     `reset_classroom` / `session` update from the browser console as a non-Leo user fails.

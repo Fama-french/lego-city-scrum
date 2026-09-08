@@ -11,6 +11,12 @@ export function UserSelector({ members, onJoin }: UserSelectorProps) {
   const [joiningId, setJoiningId] = useState<string | null>(null)
 
   async function handleClick(member: TeamMember) {
+    if (member.auth_user_id) {
+      const confirmed = window.confirm(
+        `${member.name} is currently in use on another device. Join here anyway? (That device will be signed out of ${member.name}.)`
+      )
+      if (!confirmed) return
+    }
     setError(null)
     setJoiningId(member.id)
     const result = await onJoin(member.id)
@@ -30,7 +36,7 @@ export function UserSelector({ members, onJoin }: UserSelectorProps) {
               key={member.id}
               className="user-card"
               onClick={() => handleClick(member)}
-              disabled={taken || joiningId === member.id}
+              disabled={joiningId === member.id}
             >
               <span className="name">{member.name}</span>
               <span className="role">{member.role}</span>

@@ -1,7 +1,7 @@
 const STEPS = [
-  { title: '1. Write', body: 'Each person creates three user stories.' },
-  { title: '2. Prioritize', body: 'Everyone independently ranks the backlog.' },
-  { title: '3. Estimate', body: 'Everyone estimates story points.' },
+  { title: '1. Write', body: 'Create user stories. As soon as you’ve written one, ordering and estimating unlock.' },
+  { title: '2. Order & Estimate', body: 'Drag the backlog into your own priority order and pick story points — at your own pace, privately.' },
+  { title: '3. Validate', body: 'Once your order and every estimate are set, validate them. Everyone sees who’s done; Leo reveals the team result once everyone has.' },
   { title: '4. Sprint', body: 'Choose work and move it to In Progress.' },
   { title: '5. Demo', body: 'Show the teaching staff what you built.' },
   { title: '6. Retrospective', body: 'Discuss what worked and groom the backlog.' },

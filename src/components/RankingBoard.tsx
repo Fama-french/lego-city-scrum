@@ -1,36 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import type { Story } from '../types/database'
 
 interface RankingBoardProps {
   stories: Story[]
-  initialRanking: Record<string, number> | null
-  submitted: boolean
-  onSubmit: (orderedStoryIds: string[]) => Promise<{ ok: true } | { ok: false; error: string }>
+  order: string[]
+  onReorder: (orderedStoryIds: string[]) => void
 }
 
-function initialOrder(stories: Story[], ranking: Record<string, number> | null): string[] {
-  const ids = stories.map((s) => s.id)
-  if (!ranking || Object.keys(ranking).length === 0) return ids
-  return [...ids].sort((a, b) => (ranking[a] ?? 999) - (ranking[b] ?? 999))
-}
-
-export function RankingBoard({ stories, initialRanking, submitted, onSubmit }: RankingBoardProps) {
-  const [order, setOrder] = useState<string[]>(() => initialOrder(stories, initialRanking))
+export function RankingBoard({ stories, order, onReorder }: RankingBoardProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [justSubmitted, setJustSubmitted] = useState(false)
-
-  useEffect(() => {
-    setOrder((prev) => {
-      const known = new Set(stories.map((s) => s.id))
-      const kept = prev.filter((id) => known.has(id))
-      const missing = stories.map((s) => s.id).filter((id) => !kept.includes(id))
-      return [...kept, ...missing]
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stories.length])
-
   const storyById = new Map(stories.map((s) => [s.id, s]))
 
   function move(index: number, direction: -1 | 1) {
@@ -38,7 +16,7 @@ export function RankingBoard({ stories, initialRanking, submitted, onSubmit }: R
     if (target < 0 || target >= order.length) return
     const next = [...order]
     ;[next[index], next[target]] = [next[target], next[index]]
-    setOrder(next)
+    onReorder(next)
   }
 
   function handleDrop(index: number) {
@@ -46,25 +24,13 @@ export function RankingBoard({ stories, initialRanking, submitted, onSubmit }: R
     const next = [...order]
     const [moved] = next.splice(dragIndex, 1)
     next.splice(index, 0, moved)
-    setOrder(next)
+    onReorder(next)
     setDragIndex(null)
-  }
-
-  async function handleSubmit() {
-    setSaving(true)
-    setError(null)
-    const result = await onSubmit(order)
-    setSaving(false)
-    if (!result.ok) {
-      setError(result.error)
-      return
-    }
-    setJustSubmitted(true)
   }
 
   return (
     <div className="card">
-      <h2>Prioritize the Backlog</h2>
+      <h2>Order the Backlog</h2>
       <p className="hint">
         Drag the stories into the order you think the team should build them (or use the arrow buttons). Most
         important at the top. Your order is private until Leo reveals the team priority.
@@ -111,13 +77,6 @@ export function RankingBoard({ stories, initialRanking, submitted, onSubmit }: R
         })}
       </ul>
       <p className="hint">LEAST IMPORTANT</p>
-
-      {error && <p className="error-banner">{error}</p>}
-      {justSubmitted && !error && <p className="hint">Your ranking has been submitted.</p>}
-
-      <button type="button" className="btn btn-primary" onClick={handleSubmit} disabled={saving || order.length === 0}>
-        {saving ? 'Saving…' : submitted ? 'Update My Ranking' : 'Submit My Ranking'}
-      </button>
     </div>
   )
 }

@@ -16,6 +16,10 @@ function allDone(progress: ProgressRow[]): boolean {
   return progress.length > 0 && progress.every((p) => p.complete)
 }
 
+function allValidated(priorityProgress: ProgressRow[], estimateProgress: ProgressRow[]): boolean {
+  return allDone(priorityProgress) && allDone(estimateProgress)
+}
+
 export function FacilitatorControls({ session, priorityProgress, estimateProgress, onAdvance, onReset }: FacilitatorControlsProps) {
   const [confirmingReset, setConfirmingReset] = useState(false)
   const [resetting, setResetting] = useState(false)
@@ -34,52 +38,25 @@ export function FacilitatorControls({ session, priorityProgress, estimateProgres
   }
 
   function renderNextStepButton() {
-    const { current_stage, current_sprint, priority_revealed, estimates_revealed } = session
+    const { current_stage, current_sprint } = session
 
     switch (current_stage) {
       case 'join':
-        return <button className="btn btn-primary" onClick={() => onAdvance({ current_stage: 'stories' })}>Start Story Writing</button>
       case 'stories':
-        return (
-          <button className="btn btn-primary" onClick={() => onAdvance({ current_stage: 'prioritization', priority_revealed: false })}>
-            Start Prioritization
-          </button>
-        )
       case 'prioritization':
-        if (!priority_revealed) {
-          const ready = allDone(priorityProgress)
-          return (
-            <button className="btn btn-primary" disabled={!ready} onClick={() => onAdvance({ priority_revealed: true })}>
-              Reveal Team Priority {ready ? '' : '(waiting for everyone)'}
-            </button>
-          )
-        }
+      case 'estimation': {
+        const ready = allValidated(priorityProgress, estimateProgress)
+        const nextStage = current_sprint === 0 ? 'backlog' : 'retrospective'
         return (
-          <button className="btn btn-primary" onClick={() => onAdvance({ current_stage: 'estimation', estimates_revealed: false })}>
-            Start Estimation
+          <button
+            className="btn btn-primary"
+            disabled={!ready}
+            onClick={() => onAdvance({ priority_revealed: true, estimates_revealed: true, current_stage: nextStage })}
+          >
+            Reveal Order & Points {ready ? '' : '(waiting for everyone to validate)'}
           </button>
         )
-      case 'estimation':
-        if (!estimates_revealed) {
-          const ready = allDone(estimateProgress)
-          return (
-            <button className="btn btn-primary" disabled={!ready} onClick={() => onAdvance({ estimates_revealed: true })}>
-              Reveal Estimates {ready ? '' : '(waiting for everyone)'}
-            </button>
-          )
-        }
-        if (current_sprint === 0) {
-          return (
-            <button className="btn btn-primary" onClick={() => onAdvance({ current_stage: 'backlog' })}>
-              View Final Backlog
-            </button>
-          )
-        }
-        return (
-          <button className="btn btn-primary" onClick={() => onAdvance({ current_stage: 'retrospective' })}>
-            Back to Retrospective
-          </button>
-        )
+      }
       case 'backlog':
         return (
           <button className="btn btn-primary" onClick={() => onAdvance({ current_stage: 'sprint_planning', current_sprint: 1 })}>
@@ -109,22 +86,15 @@ export function FacilitatorControls({ session, priorityProgress, estimateProgres
             )}
             <div>
               <p className="hint" style={{ marginBottom: '0.35rem' }}>
-                Added new stories during grooming? Re-run a quick vote so they get a priority/estimate:
+                Added new stories during grooming? Re-open ordering &amp; estimating so they get a priority and
+                points:
               </p>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <button
-                  className="btn btn-small"
-                  onClick={() => onAdvance({ current_stage: 'prioritization', priority_revealed: false })}
-                >
-                  Re-run Prioritization
-                </button>
-                <button
-                  className="btn btn-small"
-                  onClick={() => onAdvance({ current_stage: 'estimation', estimates_revealed: false })}
-                >
-                  Re-run Estimation
-                </button>
-              </div>
+              <button
+                className="btn btn-small"
+                onClick={() => onAdvance({ current_stage: 'stories', priority_revealed: false, estimates_revealed: false })}
+              >
+                Re-open Backlog Building
+              </button>
             </div>
           </div>
         )

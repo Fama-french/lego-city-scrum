@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { STORY_POINTS, type Story, type StoryPoints } from '../types/database'
+import { PointsHelp } from './PointsHelp'
 
 interface EstimationBoardProps {
   stories: Story[]
@@ -34,6 +35,8 @@ export function EstimationBoard({ stories, myEstimates, onSubmit }: EstimationBo
           {doneCount} / {stories.length} stories estimated by you
         </strong>
       </div>
+
+      <PointsHelp />
 
       {error && <p className="error-banner">{error}</p>}
 

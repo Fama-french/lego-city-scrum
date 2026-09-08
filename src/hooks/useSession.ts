@@ -65,10 +65,10 @@ export function useSession(): UseSessionResult {
 
 export function stageLabel(stage: Stage): string {
   const labels: Record<Stage, string> = {
-    join: 'Join',
-    stories: 'Write User Stories',
-    prioritization: 'Prioritization',
-    estimation: 'Estimation',
+    join: 'Write, Order & Estimate',
+    stories: 'Write, Order & Estimate',
+    prioritization: 'Write, Order & Estimate',
+    estimation: 'Write, Order & Estimate',
     backlog: 'Final Product Backlog',
     sprint_planning: 'Sprint Planning',
     sprint: 'Sprint',

@@ -9,12 +9,8 @@ import { assignPriorityPositions } from './lib/aggregation'
 import { isFacilitator } from './lib/permissions'
 import { Layout } from './components/Layout'
 import { FacilitatorControls } from './components/FacilitatorControls'
-import { CityVision } from './components/CityVision'
-import { HowItWorks } from './components/HowItWorks'
 import { JoinPage } from './pages/JoinPage'
 import { StoriesPage } from './pages/StoriesPage'
-import { PrioritizationPage } from './pages/PrioritizationPage'
-import { EstimationPage } from './pages/EstimationPage'
 import { BacklogPage } from './pages/BacklogPage'
 import { SprintPage } from './pages/SprintPage'
 import { DemoPage } from './pages/DemoPage'
@@ -79,48 +75,24 @@ function App() {
     if (!session) return null
     switch (session.current_stage) {
       case 'join':
-        return (
-          <div className="stack" style={{ maxWidth: 640, margin: '2rem auto' }}>
-            <div className="card" style={{ textAlign: 'center' }}>
-              <h2>You&apos;re in, {participant!.name}.</h2>
-              <p className="hint">Waiting for Leo to start user story writing…</p>
-            </div>
-            <CityVision />
-            <HowItWorks />
-          </div>
-        )
       case 'stories':
+      // Legacy stage values from before stories/ranking/estimating were
+      // merged into one self-paced phase; treat them the same way so any
+      // session left mid-flow from an older version doesn't get stuck.
+      case 'prioritization':
+      case 'estimation':
         return (
           <StoriesPage
             stories={stories.stories}
             members={members}
             participant={participant!}
             onAddStory={stories.addStory}
-          />
-        )
-      case 'prioritization':
-        return (
-          <PrioritizationPage
-            stories={stories.stories}
-            members={members}
             myRanking={rankings.myRanking}
-            submitted={rankings.submitted}
-            progress={rankings.progress}
-            revealed={session.priority_revealed}
-            teamPriority={rankings.teamPriority}
-            onSubmit={(order) => rankings.submitRanking(order, participant!.id)}
-          />
-        )
-      case 'estimation':
-        return (
-          <EstimationPage
-            stories={stories.stories}
-            members={members}
+            rankingProgress={rankings.progress}
+            onSubmitRanking={(order) => rankings.submitRanking(order, participant!.id)}
             myEstimates={estimates.myEstimates}
-            progress={estimates.progress}
-            revealed={session.estimates_revealed}
-            teamEstimates={estimates.teamEstimates}
-            onSubmit={(storyId, points) => estimates.submitEstimate(storyId, points, participant!.id)}
+            estimateProgress={estimates.progress}
+            onSubmitEstimate={(storyId, points) => estimates.submitEstimate(storyId, points, participant!.id)}
           />
         )
       case 'backlog':
