@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { TeamMember } from '../types/database'
+import { memberColor } from '../lib/colors'
 
 interface UserSelectorProps {
   members: TeamMember[]
@@ -38,7 +39,9 @@ export function UserSelector({ members, onJoin }: UserSelectorProps) {
               onClick={() => handleClick(member)}
               disabled={joiningId === member.id}
             >
-              <span className="name">{member.name}</span>
+              <span className="name" style={{ color: memberColor(member.name) }}>
+                {member.name}
+              </span>
               <span className="role">{member.role}</span>
               {taken && <span className="hint"> (in use)</span>}
             </button>

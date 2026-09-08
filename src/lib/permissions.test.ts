@@ -31,7 +31,7 @@ function makeStory(overrides: Partial<Story>): Story {
     want: 'a school',
     benefit: 'education',
     full_story: 'As a parent, I want a school, so that education.',
-    category: 'Education',
+    categories: ['Education'],
     created_by: austin.id,
     assigned_to: null,
     status: 'backlog',

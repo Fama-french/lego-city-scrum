@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { Story, TeamMember } from '../types/database'
+import { CategoryTagList } from '../components/CategoryTag'
+import { PersonName } from '../components/PersonName'
 
 interface BacklogPageProps {
   stories: Story[]
@@ -10,8 +12,8 @@ interface BacklogPageProps {
 
 type SortKey = 'priority' | 'category' | 'points' | 'assignee'
 
-function nameOf(members: TeamMember[], id: string | null): string {
-  if (!id) return '—'
+function nameOf(members: TeamMember[], id: string | null): string | null {
+  if (!id) return null
   return members.find((m) => m.id === id)?.name ?? 'Unknown'
 }
 
@@ -28,13 +30,13 @@ export function BacklogPage({ stories, members, priorityMap, pointsMap }: Backlo
           diff = (priorityMap[a.id] ?? 999) - (priorityMap[b.id] ?? 999)
           break
         case 'category':
-          diff = a.category.localeCompare(b.category)
+          diff = a.categories.join(', ').localeCompare(b.categories.join(', '))
           break
         case 'points':
           diff = (pointsMap[a.id] ?? -1) - (pointsMap[b.id] ?? -1)
           break
         case 'assignee':
-          diff = nameOf(members, a.assigned_to).localeCompare(nameOf(members, b.assigned_to))
+          diff = (nameOf(members, a.assigned_to) ?? '').localeCompare(nameOf(members, b.assigned_to) ?? '')
           break
       }
       return asc ? diff : -diff
@@ -71,15 +73,20 @@ export function BacklogPage({ stories, members, priorityMap, pointsMap }: Backlo
             </tr>
           </thead>
           <tbody>
-            {sorted.map((story) => (
-              <tr key={story.id}>
-                <td>{priorityMap[story.id] ?? '—'}</td>
-                <td>{story.full_story}</td>
-                <td>{story.category}</td>
-                <td>{pointsMap[story.id] ?? '—'}</td>
-                <td>{nameOf(members, story.assigned_to)}</td>
-              </tr>
-            ))}
+            {sorted.map((story) => {
+              const assignee = nameOf(members, story.assigned_to)
+              return (
+                <tr key={story.id}>
+                  <td>{priorityMap[story.id] ?? '—'}</td>
+                  <td>{story.full_story}</td>
+                  <td>
+                    <CategoryTagList categories={story.categories} />
+                  </td>
+                  <td>{pointsMap[story.id] ?? '—'}</td>
+                  <td>{assignee ? <PersonName name={assignee} /> : '—'}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

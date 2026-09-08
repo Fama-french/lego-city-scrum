@@ -1,4 +1,5 @@
 import type { ProgressRow } from '../types/database'
+import { PersonName } from './PersonName'
 
 export function ProgressIndicator({ progress, label }: { progress: ProgressRow[]; label: string }) {
   const doneCount = progress.filter((p) => p.complete).length
@@ -10,7 +11,7 @@ export function ProgressIndicator({ progress, label }: { progress: ProgressRow[]
       <ul className="progress-list" style={{ marginTop: '0.5rem' }}>
         {progress.map((p) => (
           <li key={p.participant_id}>
-            {p.name} {p.complete ? '✓' : '○'}
+            <PersonName name={p.name} /> {p.complete ? '✓' : '○'}
           </li>
         ))}
       </ul>

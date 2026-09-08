@@ -10,7 +10,7 @@ interface RetrospectivePageProps {
   priorityMap: Record<string, number>
   pointsMap: Record<string, number>
   onAddNote: (note: string) => Promise<{ ok: true } | { ok: false; error: string }>
-  onAddStory: (input: { actor: string; want: string; benefit: string; category: Category; createdBy: string }) => Promise<{ ok: true } | { ok: false; error: string }>
+  onAddStory: (input: { actor: string; want: string; benefit: string; categories: Category[]; createdBy: string }) => Promise<{ ok: true } | { ok: false; error: string }>
   onUpdateStory: (id: string, patch: Partial<Story>) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 

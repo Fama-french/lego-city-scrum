@@ -7,7 +7,7 @@ interface NewStoryInput {
   actor: string
   want: string
   benefit: string
-  category: Category
+  categories: Category[]
   createdBy: string
 }
 
@@ -61,7 +61,7 @@ export function useStories(): UseStoriesResult {
       want: input.want.trim(),
       benefit: input.benefit.trim(),
       full_story,
-      category: input.category,
+      categories: input.categories,
       created_by: input.createdBy,
       status: 'backlog',
     })

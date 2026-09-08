@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { STORY_POINTS, type Story, type StoryPoints } from '../types/database'
 import { PointsHelp } from './PointsHelp'
+import { CategoryTagList } from './CategoryTag'
 
 interface EstimationBoardProps {
   stories: Story[]
@@ -42,7 +43,7 @@ export function EstimationBoard({ stories, myEstimates, onSubmit }: EstimationBo
 
       {stories.map((story) => (
         <div className="card" key={story.id}>
-          <span className="category-tag">{story.category}</span>
+          <CategoryTagList categories={story.categories} />
           <p className="story-sentence">{story.full_story}</p>
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {STORY_POINTS.map((points) => (

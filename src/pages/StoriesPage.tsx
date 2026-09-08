@@ -7,6 +7,7 @@ import { RankingBoard } from '../components/RankingBoard'
 import { useOrderState } from '../hooks/useOrderState'
 import { EstimationBoard } from '../components/EstimationBoard'
 import { ProgressIndicator } from '../components/ProgressIndicator'
+import { PersonName } from '../components/PersonName'
 import { threeStoryProgress } from '../lib/permissions'
 
 interface StoriesPageProps {
@@ -17,7 +18,7 @@ interface StoriesPageProps {
     actor: string
     want: string
     benefit: string
-    category: Category
+    categories: Category[]
     createdBy: string
   }) => Promise<{ ok: true } | { ok: false; error: string }>
   myRanking: Record<string, number> | null
@@ -89,7 +90,7 @@ export function StoriesPage({
         <ul className="progress-list">
           {storyProgress.map(({ member, count, done }) => (
             <li key={member.id}>
-              {member.name}: {count} / 3 {done ? '✓' : ''}
+              <PersonName name={member.name} />: {count} / 3 {done ? '✓' : ''}
             </li>
           ))}
         </ul>

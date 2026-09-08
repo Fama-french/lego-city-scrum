@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react'
 import type { Story, TeamMember } from '../types/database'
+import { CategoryTagList } from './CategoryTag'
+import { PersonName } from './PersonName'
 
 interface StoryCardProps {
   story: Story
@@ -11,8 +13,8 @@ interface StoryCardProps {
   actions?: ReactNode
 }
 
-function nameOf(members: TeamMember[], id: string | null): string {
-  if (!id) return '—'
+function nameOf(members: TeamMember[], id: string | null): string | null {
+  if (!id) return null
   return members.find((m) => m.id === id)?.name ?? 'Unknown'
 }
 
@@ -23,16 +25,19 @@ const STATUS_LABEL: Record<Story['status'], string> = {
 }
 
 export function StoryCard({ story, members, priority, points, showStatus, showSprint, actions }: StoryCardProps) {
+  const creator = nameOf(members, story.created_by)
+  const assignee = nameOf(members, story.assigned_to)
+
   return (
     <div className="card kanban-card">
-      <span className="category-tag">{story.category}</span>
+      <CategoryTagList categories={story.categories} />
       <p className="story-sentence">{story.full_story}</p>
       <div className="story-meta">
         <span>
-          <strong>Created by:</strong> {nameOf(members, story.created_by)}
+          <strong>Created by:</strong> {creator ? <PersonName name={creator} /> : '—'}
         </span>
         <span>
-          <strong>Assignee:</strong> {nameOf(members, story.assigned_to)}
+          <strong>Assignee:</strong> {assignee ? <PersonName name={assignee} /> : '—'}
         </span>
         <span>
           <strong>Priority:</strong> {priority ? `#${priority}` : 'Not ranked'}

@@ -1,16 +1,17 @@
 import { useState, type FormEvent } from 'react'
-import { ACTOR_SUGGESTIONS, CATEGORIES, type Category } from '../types/database'
+import { ACTOR_SUGGESTIONS, type Category } from '../types/database'
 import { buildFullStory } from '../lib/storyText'
+import { CategoryPicker } from './CategoryPicker'
 
 interface StoryFormProps {
-  onSubmit: (input: { actor: string; want: string; benefit: string; category: Category }) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSubmit: (input: { actor: string; want: string; benefit: string; categories: Category[] }) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 export function StoryForm({ onSubmit }: StoryFormProps) {
   const [actor, setActor] = useState('')
   const [want, setWant] = useState('')
   const [benefit, setBenefit] = useState('')
-  const [category, setCategory] = useState<Category>('Other')
+  const [categories, setCategories] = useState<Category[]>([])
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
 
@@ -23,8 +24,12 @@ export function StoryForm({ onSubmit }: StoryFormProps) {
       setError('Please fill in all three fields.')
       return
     }
+    if (categories.length === 0) {
+      setError('Pick at least one category.')
+      return
+    }
     setSubmitting(true)
-    const result = await onSubmit({ actor, want, benefit, category })
+    const result = await onSubmit({ actor, want, benefit, categories })
     setSubmitting(false)
     if (!result.ok) {
       setError(result.error)
@@ -33,7 +38,7 @@ export function StoryForm({ onSubmit }: StoryFormProps) {
     setActor('')
     setWant('')
     setBenefit('')
-    setCategory('Other')
+    setCategories([])
   }
 
   return (
@@ -80,16 +85,7 @@ export function StoryForm({ onSubmit }: StoryFormProps) {
         />
       </div>
 
-      <div className="field">
-        <label htmlFor="category">Category</label>
-        <select id="category" value={category} onChange={(e) => setCategory(e.target.value as Category)}>
-          {CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
+      <CategoryPicker selected={categories} onChange={setCategories} />
 
       {preview && (
         <p className="hint">

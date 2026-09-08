@@ -68,7 +68,7 @@ export interface Story {
   want: string
   benefit: string
   full_story: string
-  category: Category
+  categories: Category[]
   created_by: string
   assigned_to: string | null
   status: StoryStatus

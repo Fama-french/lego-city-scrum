@@ -263,9 +263,32 @@ a {
   border-radius: var(--radius);
   padding: 0.1rem 0.5rem;
   font-size: 0.75rem;
+  font-weight: bold;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 0.4rem;
+  margin-right: 0.3rem;
+}
+
+.category-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.category-chip {
+  font-family: var(--font);
+  border: 2px solid;
+  border-radius: var(--radius);
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  background: var(--white);
+}
+
+.category-chip:focus-visible {
+  outline: 3px solid var(--black);
+  outline-offset: 2px;
 }
 
 .story-sentence {

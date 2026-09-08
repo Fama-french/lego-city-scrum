@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import type { ClassroomSession, TeamMember } from '../types/database'
 import { isFacilitator } from '../lib/permissions'
 import { stageLabel } from '../hooks/useSession'
+import { memberColor } from '../lib/colors'
 
 interface LayoutProps {
   participant: TeamMember
@@ -17,7 +18,7 @@ export function Layout({ participant, session, onSwitchUser, children }: LayoutP
         <span className="topbar-title">LEGO CITY SCRUM</span>
         <div className="topbar-meta">
           <div className="meta-item">
-            <strong>{participant.name}</strong>
+            <strong style={{ color: memberColor(participant.name) }}>{participant.name}</strong>
             {participant.role}
           </div>
           <div className="meta-item">

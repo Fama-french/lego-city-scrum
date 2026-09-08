@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
 import type { RetroNote, Story, TeamMember } from '../types/database'
-import { CATEGORIES, type Category } from '../types/database'
+import type { Category } from '../types/database'
 import { canEditStory } from '../lib/permissions'
 import { StoryCard } from './StoryCard'
 import { StoryForm } from './StoryForm'
+import { CategoryPicker } from './CategoryPicker'
+import { PersonName } from './PersonName'
 
 interface RetrospectiveProps {
   sprint: number
@@ -14,7 +16,7 @@ interface RetrospectiveProps {
   stories: Story[]
   priorityMap: Record<string, number>
   pointsMap: Record<string, number>
-  onAddStory: (input: { actor: string; want: string; benefit: string; category: Category }) => Promise<{ ok: true } | { ok: false; error: string }>
+  onAddStory: (input: { actor: string; want: string; benefit: string; categories: Category[] }) => Promise<{ ok: true } | { ok: false; error: string }>
   onUpdateStory: (id: string, patch: Partial<Story>) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
@@ -61,7 +63,7 @@ export function Retrospective({
               .filter((n) => n.sprint === sprint)
               .map((n) => (
                 <li key={n.id}>
-                  {n.note} <span className="hint">— {nameOf(members, n.author_id)}</span>
+                  {n.note} — <PersonName name={nameOf(members, n.author_id)} />
                 </li>
               ))}
           </ul>
@@ -80,7 +82,7 @@ export function Retrospective({
 
       <div className="card">
         <h2>Backlog Grooming</h2>
-        <p className="hint">Add new stories, adjust category, or move stories between states.</p>
+        <p className="hint">Add new stories, adjust categories, or move stories between states.</p>
       </div>
 
       <StoryForm onSubmit={onAddStory} />
@@ -98,34 +100,24 @@ export function Retrospective({
               showStatus
               actions={
                 editable ? (
-                  <>
-                    <label className="hint" htmlFor={`cat-${story.id}`}>
-                      Category:
-                    </label>
-                    <select
-                      id={`cat-${story.id}`}
-                      value={story.category}
-                      onChange={(e) => onUpdateStory(story.id, { category: e.target.value as Category })}
-                    >
-                      {CATEGORIES.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
-                    <label className="hint" htmlFor={`status-${story.id}`}>
-                      Status:
-                    </label>
-                    <select
-                      id={`status-${story.id}`}
-                      value={story.status}
-                      onChange={(e) => onUpdateStory(story.id, { status: e.target.value as Story['status'] })}
-                    >
-                      <option value="backlog">Backlog</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="done">Done</option>
-                    </select>
-                  </>
+                  <div className="stack" style={{ width: '100%' }}>
+                    <CategoryPicker
+                      selected={story.categories}
+                      onChange={(next) => onUpdateStory(story.id, { categories: next })}
+                    />
+                    <div className="field" style={{ marginBottom: 0 }}>
+                      <label htmlFor={`status-${story.id}`}>Status</label>
+                      <select
+                        id={`status-${story.id}`}
+                        value={story.status}
+                        onChange={(e) => onUpdateStory(story.id, { status: e.target.value as Story['status'] })}
+                      >
+                        <option value="backlog">Backlog</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="done">Done</option>
+                      </select>
+                    </div>
+                  </div>
                 ) : null
               }
             />
