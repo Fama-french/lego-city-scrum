@@ -21,6 +21,8 @@ interface UseStoriesResult {
   removeAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   setStatus: (id: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
   setPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  setPriorityOverride: (storyId: string, priority: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  setDeprioritized: (storyId: string, deprioritized: boolean) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 export function useStories(): UseStoriesResult {
@@ -110,5 +112,33 @@ export function useStories(): UseStoriesResult {
     return { ok: true as const }
   }, [])
 
-  return { stories, loading, error, addStory, updateStory, addAssignee, removeAssignee, setStatus, setPointsOverride }
+  const setPriorityOverride = useCallback(async (storyId: string, priority: number | null) => {
+    const { error } = await supabase.rpc('set_priority_override', { p_story_id: storyId, p_priority: priority })
+    if (error) {
+      return { ok: false as const, error: error.message }
+    }
+    return { ok: true as const }
+  }, [])
+
+  const setDeprioritized = useCallback(async (storyId: string, deprioritized: boolean) => {
+    const { error } = await supabase.rpc('set_story_deprioritized', { p_story_id: storyId, p_deprioritized: deprioritized })
+    if (error) {
+      return { ok: false as const, error: error.message }
+    }
+    return { ok: true as const }
+  }, [])
+
+  return {
+    stories,
+    loading,
+    error,
+    addStory,
+    updateStory,
+    addAssignee,
+    removeAssignee,
+    setStatus,
+    setPointsOverride,
+    setPriorityOverride,
+    setDeprioritized,
+  }
 }

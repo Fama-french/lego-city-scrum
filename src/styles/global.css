@@ -336,6 +336,19 @@ a {
 
 .kanban-card {
   background: var(--white);
+  position: relative;
+}
+
+.priority-badge {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: 0.1rem 0.4rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  background: var(--white);
 }
 
 /* Ranking board */

@@ -74,6 +74,8 @@ export interface Story {
   status: StoryStatus
   sprint: number | null
   points_override: number | null
+  priority_override: number | null
+  deprioritized: boolean
   created_at: string
   updated_at: string
 }

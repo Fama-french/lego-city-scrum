@@ -95,8 +95,9 @@ Browser (each student's laptop)
         ├── PostgreSQL          (team_members, session, stories, rankings, estimates, retro_notes)
         ├── Realtime            (postgres_changes on session/stories/retro_notes/team_members)
         ├── Row Level Security  (who can read/write which rows)
-        └── SQL functions       (add_assignee, remove_assignee, set_points_override, get_point_submissions,
-                                 get_team_priority, get_team_estimates, reset_classroom)
+        └── SQL functions       (add_assignee, remove_assignee, set_points_override, set_priority_override,
+                                 set_story_deprioritized, get_point_submissions, get_team_priority,
+                                 get_team_estimates, reset_classroom)
 ```
 
 No custom backend server — the browser talks to Supabase directly using the public anon key. All
@@ -151,6 +152,16 @@ default — nobody types in "the" priority, and nobody has to guess "the" estima
   private-until-everyone-submits rule, but only for this specific trio, and is enforced server-side by
   `get_point_submissions()`, not just hidden in the UI. It isn't gated on estimates being revealed, so it
   can be used to check in-progress voting too (e.g. during Sprint Planning).
+- **Priority override**: the same trio can also override a story's priority directly (not just points), via
+  a small badge in the top-right corner of every story card and in the backlog table's Priority column.
+  Click it to type a number; the badge shows the effective priority either way (calculated or overridden).
+  Enforced server-side by `set_priority_override()`.
+- **Hide/deprioritize**: the same trio can tuck a story out of the main Backlog view (Kanban board and the
+  product backlog table) without deleting it — it collapses into a "Deprioritized (N)" section that anyone
+  can expand, and can be restored just as easily. Enforced server-side by `set_story_deprioritized()`.
+- **Kanban and backlog ordering**: stories in every column/table are sorted by this same priority (lower
+  number first) — Backlog, In Progress, and Done all order themselves once priority has been revealed,
+  instead of showing creation order.
 
 Both calculations exist in two places that are meant to agree:
 - [`src/lib/aggregation.ts`](src/lib/aggregation.ts) — a small, dependency-free, unit-tested TypeScript

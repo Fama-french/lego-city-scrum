@@ -6,7 +6,9 @@ import type { Story, TeamMember } from '../types/database'
 // "Security model" section for the full explanation.
 
 const KANBAN_ADMIN_NAMES = ['Leo', 'Gbenro', 'Austin']
-const POINTS_OVERRIDE_NAMES = ['Ayush', 'Gbenro', 'Leo']
+// Ayush (Scrum Master), Gbenro (Product Owner), and Leo arbitrate the backlog:
+// overriding points/priority and hiding/deprioritizing stories.
+const BACKLOG_ARBITRATOR_NAMES = ['Ayush', 'Gbenro', 'Leo']
 
 export function isFacilitator(member: TeamMember | null): boolean {
   return member?.name === 'Leo'
@@ -32,9 +34,23 @@ export function canChangeStoryStatus(member: TeamMember | null, story: Story): b
   return isKanbanAdmin(member) || story.assignees.includes(member.id)
 }
 
+function isBacklogArbitrator(member: TeamMember | null): boolean {
+  return member !== null && BACKLOG_ARBITRATOR_NAMES.includes(member.name)
+}
+
 /** Ayush (Scrum Master), Gbenro (Product Owner), and Leo can override a story's final point value. */
 export function canOverridePoints(member: TeamMember | null): boolean {
-  return member !== null && POINTS_OVERRIDE_NAMES.includes(member.name)
+  return isBacklogArbitrator(member)
+}
+
+/** Same trio, for a story's priority (shown in the corner badge on each card). */
+export function canOverridePriority(member: TeamMember | null): boolean {
+  return isBacklogArbitrator(member)
+}
+
+/** Same trio, for hiding/deprioritizing a story out of the main backlog view. */
+export function canHideStory(member: TeamMember | null): boolean {
+  return isBacklogArbitrator(member)
 }
 
 export function canEditStory(member: TeamMember | null, story: Story): boolean {

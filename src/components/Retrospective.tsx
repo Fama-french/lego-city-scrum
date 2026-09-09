@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import type { RetroNote, Story, TeamMember } from '../types/database'
 import type { Category } from '../types/database'
-import { canEditStory, canOverridePoints } from '../lib/permissions'
+import { canEditStory, canHideStory, canOverridePoints, canOverridePriority } from '../lib/permissions'
 import { StoryCard } from './StoryCard'
 import { StoryForm } from './StoryForm'
 import { CategoryPicker } from './CategoryPicker'
@@ -19,6 +19,8 @@ interface RetrospectiveProps {
   onAddStory: (input: { actor: string; want: string; benefit: string; categories: Category[] }) => Promise<{ ok: true } | { ok: false; error: string }>
   onUpdateStory: (id: string, patch: Partial<Story>) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetPriorityOverride: (storyId: string, priority: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetDeprioritized: (storyId: string, deprioritized: boolean) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 function nameOf(members: TeamMember[], id: string): string {
@@ -37,6 +39,8 @@ export function Retrospective({
   onAddStory,
   onUpdateStory,
   onSetPointsOverride,
+  onSetPriorityOverride,
+  onSetDeprioritized,
 }: RetrospectiveProps) {
   const [text, setText] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -90,43 +94,61 @@ export function Retrospective({
       <StoryForm onSubmit={onAddStory} />
 
       <div className="stack">
-        {stories.map((story) => {
-          const editable = canEditStory(participant, story)
-          return (
-            <StoryCard
-              key={story.id}
-              story={story}
-              members={members}
-              priority={priorityMap[story.id] ?? null}
-              points={pointsMap[story.id] ?? null}
-              showStatus
-              canOverridePoints={canOverridePoints(participant)}
-              onSetPointsOverride={onSetPointsOverride}
-              actions={
-                editable ? (
+        {[...stories]
+          .sort((a, b) => (priorityMap[a.id] ?? Infinity) - (priorityMap[b.id] ?? Infinity))
+          .map((story) => {
+            const editable = canEditStory(participant, story)
+            const hideAllowed = canHideStory(participant)
+            return (
+              <StoryCard
+                key={story.id}
+                story={story}
+                members={members}
+                priority={priorityMap[story.id] ?? null}
+                points={pointsMap[story.id] ?? null}
+                showStatus
+                canOverridePoints={canOverridePoints(participant)}
+                onSetPointsOverride={onSetPointsOverride}
+                canOverridePriority={canOverridePriority(participant)}
+                onSetPriorityOverride={onSetPriorityOverride}
+                actions={
+                  editable || hideAllowed ? (
                   <div className="stack" style={{ width: '100%' }}>
-                    <CategoryPicker
-                      selected={story.categories}
-                      onChange={(next) => onUpdateStory(story.id, { categories: next })}
-                    />
-                    <div className="field" style={{ marginBottom: 0 }}>
-                      <label htmlFor={`status-${story.id}`}>Status</label>
-                      <select
-                        id={`status-${story.id}`}
-                        value={story.status}
-                        onChange={(e) => onUpdateStory(story.id, { status: e.target.value as Story['status'] })}
+                    {editable && (
+                      <>
+                        <CategoryPicker
+                          selected={story.categories}
+                          onChange={(next) => onUpdateStory(story.id, { categories: next })}
+                        />
+                        <div className="field" style={{ marginBottom: 0 }}>
+                          <label htmlFor={`status-${story.id}`}>Status</label>
+                          <select
+                            id={`status-${story.id}`}
+                            value={story.status}
+                            onChange={(e) => onUpdateStory(story.id, { status: e.target.value as Story['status'] })}
+                          >
+                            <option value="backlog">Backlog</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="done">Done</option>
+                          </select>
+                        </div>
+                      </>
+                    )}
+                    {hideAllowed && (
+                      <button
+                        type="button"
+                        className="btn btn-small"
+                        onClick={() => onSetDeprioritized(story.id, !story.deprioritized)}
                       >
-                        <option value="backlog">Backlog</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="done">Done</option>
-                      </select>
-                    </div>
+                        {story.deprioritized ? 'Restore' : 'Hide'}
+                      </button>
+                    )}
                   </div>
-                ) : null
-              }
-            />
-          )
-        })}
+                  ) : null
+                }
+              />
+            )
+          })}
       </div>
     </div>
   )

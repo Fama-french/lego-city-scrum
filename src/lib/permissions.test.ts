@@ -3,7 +3,9 @@ import {
   canAssign,
   canChangeStoryStatus,
   canEditStory,
+  canHideStory,
   canOverridePoints,
+  canOverridePriority,
   canRemoveAssignee,
   isFacilitator,
   isKanbanAdmin,
@@ -31,6 +33,8 @@ function makeStory(overrides: Partial<Story>): Story {
     status: 'backlog',
     sprint: null,
     points_override: null,
+    priority_override: null,
+    deprioritized: false,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z',
     ...overrides,
@@ -114,6 +118,19 @@ describe('canOverridePoints', () => {
     expect(canOverridePoints(jessica)).toBe(false)
     expect(canOverridePoints(sije)).toBe(false)
     expect(canOverridePoints(null)).toBe(false)
+  })
+})
+
+describe('canOverridePriority and canHideStory', () => {
+  it('share the same Ayush/Gbenro/Leo trio as canOverridePoints', () => {
+    for (const member of [ayush, gbenro, leo]) {
+      expect(canOverridePriority(member)).toBe(true)
+      expect(canHideStory(member)).toBe(true)
+    }
+    for (const member of [austin, jessica, sije, null]) {
+      expect(canOverridePriority(member)).toBe(false)
+      expect(canHideStory(member)).toBe(false)
+    }
   })
 })
 

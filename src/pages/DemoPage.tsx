@@ -7,10 +7,13 @@ interface DemoPageProps {
   members: TeamMember[]
   participant: TeamMember
   pointsMap: Record<string, number>
+  priorityMap: Record<string, number>
   onAddAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onRemoveAssignee: (storyId: string, participantId: string) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetStatus: (storyId: string, status: StoryStatus) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetPriorityOverride: (storyId: string, priority: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetDeprioritized: (storyId: string, deprioritized: boolean) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 export function DemoPage({
@@ -19,10 +22,13 @@ export function DemoPage({
   members,
   participant,
   pointsMap,
+  priorityMap,
   onAddAssignee,
   onRemoveAssignee,
   onSetStatus,
   onSetPointsOverride,
+  onSetPriorityOverride,
+  onSetDeprioritized,
 }: DemoPageProps) {
   return (
     <div className="stack">
@@ -33,10 +39,13 @@ export function DemoPage({
         members={members}
         participant={participant}
         pointsMap={pointsMap}
+        priorityMap={priorityMap}
         onAddAssignee={onAddAssignee}
         onRemoveAssignee={onRemoveAssignee}
         onSetStatus={onSetStatus}
         onSetPointsOverride={onSetPointsOverride}
+        onSetPriorityOverride={onSetPriorityOverride}
+        onSetDeprioritized={onSetDeprioritized}
       />
     </div>
   )

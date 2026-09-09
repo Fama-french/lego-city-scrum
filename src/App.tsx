@@ -6,7 +6,7 @@ import { useRankings } from './hooks/useRankings'
 import { useEstimates } from './hooks/useEstimates'
 import { useRetroNotes } from './hooks/useRetroNotes'
 import { assignPriorityPositions } from './lib/aggregation'
-import { canOverridePoints, isFacilitator } from './lib/permissions'
+import { canHideStory, canOverridePoints, canOverridePriority, isFacilitator } from './lib/permissions'
 import { Layout } from './components/Layout'
 import { FacilitatorControls } from './components/FacilitatorControls'
 import { PointsReviewPanel } from './components/PointsReviewPanel'
@@ -34,13 +34,19 @@ function App() {
   )
 
   const priorityMap = useMemo(() => {
-    if (!rankings.teamPriority) return {}
-    const ranked = assignPriorityPositions(
-      rankings.teamPriority.map((r) => ({ storyId: r.story_id, averageRank: r.average_rank, submissions: r.submissions })),
-      createdAtByStory
-    )
-    return Object.fromEntries(ranked.map((r) => [r.storyId, r.priority]))
-  }, [rankings.teamPriority, createdAtByStory])
+    const map: Record<string, number> = {}
+    if (rankings.teamPriority) {
+      const ranked = assignPriorityPositions(
+        rankings.teamPriority.map((r) => ({ storyId: r.story_id, averageRank: r.average_rank, submissions: r.submissions })),
+        createdAtByStory
+      )
+      for (const r of ranked) map[r.storyId] = r.priority
+    }
+    for (const story of stories.stories) {
+      if (story.priority_override != null) map[story.id] = story.priority_override
+    }
+    return map
+  }, [rankings.teamPriority, createdAtByStory, stories.stories])
 
   const pointsMap = useMemo(() => {
     const map: Record<string, number> = {}
@@ -117,6 +123,10 @@ function App() {
             pointsMap={pointsMap}
             canOverridePoints={canOverridePoints(participant!)}
             onSetPointsOverride={stories.setPointsOverride}
+            canOverridePriority={canOverridePriority(participant!)}
+            onSetPriorityOverride={stories.setPriorityOverride}
+            canHideStory={canHideStory(participant!)}
+            onSetDeprioritized={stories.setDeprioritized}
           />
         )
       case 'sprint_planning':
@@ -129,10 +139,13 @@ function App() {
             members={members}
             participant={participant!}
             pointsMap={pointsMap}
+            priorityMap={priorityMap}
             onAddAssignee={stories.addAssignee}
             onRemoveAssignee={stories.removeAssignee}
             onSetStatus={stories.setStatus}
             onSetPointsOverride={stories.setPointsOverride}
+            onSetPriorityOverride={stories.setPriorityOverride}
+            onSetDeprioritized={stories.setDeprioritized}
           />
         )
       case 'demo':
@@ -143,10 +156,13 @@ function App() {
             members={members}
             participant={participant!}
             pointsMap={pointsMap}
+            priorityMap={priorityMap}
             onAddAssignee={stories.addAssignee}
             onRemoveAssignee={stories.removeAssignee}
             onSetStatus={stories.setStatus}
             onSetPointsOverride={stories.setPointsOverride}
+            onSetPriorityOverride={stories.setPriorityOverride}
+            onSetDeprioritized={stories.setDeprioritized}
           />
         )
       case 'retrospective':
@@ -163,6 +179,8 @@ function App() {
             onAddStory={stories.addStory}
             onUpdateStory={stories.updateStory}
             onSetPointsOverride={stories.setPointsOverride}
+            onSetPriorityOverride={stories.setPriorityOverride}
+            onSetDeprioritized={stories.setDeprioritized}
           />
         )
       case 'complete':

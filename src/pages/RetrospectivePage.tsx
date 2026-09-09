@@ -13,6 +13,8 @@ interface RetrospectivePageProps {
   onAddStory: (input: { actor: string; want: string; benefit: string; categories: Category[]; createdBy: string }) => Promise<{ ok: true } | { ok: false; error: string }>
   onUpdateStory: (id: string, patch: Partial<Story>) => Promise<{ ok: true } | { ok: false; error: string }>
   onSetPointsOverride: (storyId: string, points: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetPriorityOverride: (storyId: string, priority: number | null) => Promise<{ ok: true } | { ok: false; error: string }>
+  onSetDeprioritized: (storyId: string, deprioritized: boolean) => Promise<{ ok: true } | { ok: false; error: string }>
 }
 
 export function RetrospectivePage({
@@ -27,6 +29,8 @@ export function RetrospectivePage({
   onAddStory,
   onUpdateStory,
   onSetPointsOverride,
+  onSetPriorityOverride,
+  onSetDeprioritized,
 }: RetrospectivePageProps) {
   return (
     <div className="stack">
@@ -43,6 +47,8 @@ export function RetrospectivePage({
         onAddStory={(input) => onAddStory({ ...input, createdBy: participant.id })}
         onUpdateStory={onUpdateStory}
         onSetPointsOverride={onSetPointsOverride}
+        onSetPriorityOverride={onSetPriorityOverride}
+        onSetDeprioritized={onSetDeprioritized}
       />
     </div>
   )
